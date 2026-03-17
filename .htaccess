@@ -1,11 +1,7 @@
 RewriteEngine On
+RewriteBase /pos_system/
 
-# إذا الطلب ليس على public
-RewriteCond %{REQUEST_URI} !^/public/
-
-# وإذا الملف أو المجلد غير موجود فعليًا
+RewriteCond %{REQUEST_URI} !^/pos_system/public/
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-
-# إعادة التوجيه إلى public
 RewriteRule ^(.*)$ public/$1 [L]
