@@ -85,6 +85,82 @@
         </div>
 
         <div class="row">
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <div class="mb-2"><i class="fas fa-hand-holding-usd fs-24 text-info"></i></div>
+                        <h6 class="mb-2">رصيد العملاء (مستحق)</h6>
+                        <h4 class="fw-bold mb-1">{{ number_format($customersBalance ?? 0, 2) }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <div class="mb-2"><i class="fas fa-truck fs-24 text-secondary"></i></div>
+                        <h6 class="mb-2">رصيد الموردين (مستحق)</h6>
+                        <h4 class="fw-bold mb-1">{{ number_format($suppliersBalance ?? 0, 2) }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12 mb-3">
+                <a href="{{ route('admin.reports.inventory.reorder') }}" class="card text-center text-decoration-none h-100">
+                    <div class="card-body">
+                        <div class="mb-2"><i class="fas fa-exclamation-triangle fs-24 text-warning"></i></div>
+                        <h6 class="mb-2 text-dark">تنبيهات إعادة الطلب</h6>
+                        <h4 class="fw-bold mb-1">{{ $stockAlertsCount ?? 0 }}</h4>
+                        <p class="mb-0 text-muted fs-12">منتج تحت الحد</p>
+                    </div>
+                </a>
+            </div>
+            <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12 mb-3">
+                <a href="{{ route('admin.checks.index') }}" class="card text-center text-decoration-none h-100">
+                    <div class="card-body">
+                        <div class="mb-2"><i class="fas fa-money-check-alt fs-24 text-primary"></i></div>
+                        <h6 class="mb-2 text-dark">شيكات قريبة الاستحقاق</h6>
+                        <h4 class="fw-bold mb-1">{{ isset($dueChecks) ? $dueChecks->count() : 0 }}</h4>
+                        <p class="mb-0 text-muted fs-12">خلال 7 أيام</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-header"><h6 class="mb-0">أفضل 5 منتجات مبيعاً</h6></div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm table-striped mb-0">
+                            <tbody>
+                                @forelse($topProducts ?? [] as $row)
+                                    <tr><td>{{ $row->product_name }}</td><td class="text-end">{{ number_format($row->total_revenue, 2) }}</td></tr>
+                                @empty
+                                    <tr><td colspan="2" class="text-center text-muted">لا توجد بيانات</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-header"><h6 class="mb-0">أفضل 5 عملاء</h6></div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm table-striped mb-0">
+                            <tbody>
+                                @forelse($topCustomers ?? [] as $row)
+                                    <tr><td>{{ $row->customer_name }}</td><td class="text-end">{{ number_format($row->total_sales, 2) }}</td></tr>
+                                @empty
+                                    <tr><td colspan="2" class="text-center text-muted">لا توجد بيانات</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
             @can('sale-invoice-list')
             <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12 mb-3">
                 <a href="{{ route('admin.sale-invoices.index') }}" class="card text-center h-100 text-decoration-none">

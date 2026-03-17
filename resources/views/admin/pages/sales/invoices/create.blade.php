@@ -89,6 +89,10 @@
                                     <label class="form-label">قيمة الخصم</label>
                                     <input type="number" step="0.01" name="discount_value" id="discount_value" class="form-control" value="{{ old('discount_value', 0) }}" min="0">
                                 </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">كود الخصم (كوبون)</label>
+                                    <input type="text" name="coupon_code" class="form-control" value="{{ old('coupon_code') }}" placeholder="أدخل كود الكوبون ثم احفظ الفاتورة">
+                                </div>
                                 <div class="col-12">
                                     <label class="form-label">ملاحظات</label>
                                     <textarea name="notes" class="form-control" rows="1">{{ old('notes') }}</textarea>

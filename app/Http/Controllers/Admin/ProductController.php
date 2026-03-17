@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Unit;
 use App\Models\Branch;
 use App\Models\ProductPrice;
+use App\Models\ProductBarcode;
 use App\Http\Requests\Admin\StoreProductRequest;
 use App\Http\Requests\Admin\UpdateProductRequest;
 use Illuminate\Http\Request;
@@ -23,6 +24,47 @@ class ProductController extends Controller
         $this->middleware('permission:product-edit')->only(['edit', 'update']);
         $this->middleware('permission:product-delete')->only('destroy');
         $this->middleware('permission:product-show')->only('show');
+        $this->middleware('permission:product-list')->only('searchByBarcode');
+    }
+
+    /**
+     * البحث عن منتج بالباركود (الباركود الرئيسي أو من جدول product_barcodes).
+     * للاستخدام في نقطة البيع والفحوصات.
+     */
+    public function searchByBarcode(Request $request)
+    {
+        $barcode = $request->input('barcode');
+        if (empty($barcode) || !is_string($barcode)) {
+            return response()->json(['product' => null]);
+        }
+        $barcode = trim($barcode);
+
+        $product = Product::where('barcode', $barcode)->where('is_active', true)->first();
+        if ($product) {
+            return response()->json([
+                'product' => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'barcode' => $product->barcode,
+                    'unit_id' => $product->unit_id,
+                ],
+            ]);
+        }
+
+        $productBarcode = ProductBarcode::where('barcode', $barcode)->with('product')->first();
+        if ($productBarcode && $productBarcode->product && $productBarcode->product->is_active) {
+            $p = $productBarcode->product;
+            return response()->json([
+                'product' => [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'barcode' => $p->barcode ?? $barcode,
+                    'unit_id' => $p->unit_id,
+                ],
+            ]);
+        }
+
+        return response()->json(['product' => null]);
     }
 
     public function index(Request $request)
@@ -34,7 +76,8 @@ class ProductController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
                     ->orWhere('barcode', 'like', "%$search%")
-                    ->orWhere('slug', 'like', "%$search%");
+                    ->orWhere('slug', 'like', "%$search%")
+                    ->orWhereHas('barcodes', fn ($b) => $b->where('barcode', 'like', "%$search%"));
             });
         }
 
@@ -83,7 +126,7 @@ class ProductController extends Controller
 
     public function edit(Product $product)
     {
-        $product->load('prices.branch');
+        $product->load(['prices.branch', 'barcodes']);
         $categories = Category::where('is_active', true)->orderBy('name')->get();
         $units = Unit::where('is_active', true)->orderBy('name')->get();
         $branches = Branch::where('is_active', true)->orderBy('name')->get();
@@ -139,5 +182,48 @@ class ProductController extends Controller
 
         return redirect()->route('admin.products.index')
             ->with('success', 'تم حذف المنتج بنجاح');
+    }
+
+    /**
+     * إضافة باركود إضافي للمنتج.
+     */
+    public function storeBarcode(Request $request, Product $product)
+    {
+        $validated = $request->validate([
+            'barcode' => 'required|string|max:100',
+            'description' => 'nullable|string|max:255',
+        ]);
+        $barcode = trim($validated['barcode']);
+        if ($barcode === '') {
+            return redirect()->route('admin.products.edit', $product)
+                ->with('error', 'قيمة الباركود مطلوبة.');
+        }
+        if (ProductBarcode::where('barcode', $barcode)->where('product_id', '!=', $product->id)->exists()) {
+            return redirect()->route('admin.products.edit', $product)
+                ->with('error', 'هذا الباركود مستخدم لمنتج آخر.');
+        }
+        if (ProductBarcode::where('barcode', $barcode)->where('product_id', $product->id)->exists()) {
+            return redirect()->route('admin.products.edit', $product)
+                ->with('error', 'هذا الباركود مضاف مسبقاً لهذا المنتج.');
+        }
+        ProductBarcode::create([
+            'product_id' => $product->id,
+            'barcode' => $barcode,
+            'description' => $validated['description'] ?? null,
+            'is_primary' => false,
+        ]);
+        return redirect()->route('admin.products.edit', $product)
+            ->with('success', 'تم إضافة الباركود.');
+    }
+
+    /**
+     * حذف باركود إضافي.
+     */
+    public function destroyBarcode(ProductBarcode $productBarcode)
+    {
+        $product = $productBarcode->product;
+        $productBarcode->delete();
+        return redirect()->route('admin.products.edit', $product)
+            ->with('success', 'تم حذف الباركود.');
     }
 }

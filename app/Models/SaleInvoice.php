@@ -5,6 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Services\Loyalty\LoyaltyService;
+use App\Services\Inventory\BatchService;
+use App\Models\Product;
+use App\Models\Warehouse;
+use App\Models\Attachment;
 
 class SaleInvoice extends Model
 {
@@ -24,6 +29,7 @@ class SaleInvoice extends Model
         'payment_status',
         'status',
         'user_id',
+        'coupon_id',
         'notes',
     ];
 
@@ -68,6 +74,11 @@ class SaleInvoice extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function coupon()
+    {
+        return $this->belongsTo(Coupon::class, 'coupon_id');
+    }
+
     public function items()
     {
         return $this->hasMany(SaleInvoiceItem::class, 'sale_invoice_id');
@@ -81,6 +92,11 @@ class SaleInvoice extends Model
     public function saleReturns()
     {
         return $this->hasMany(SaleReturn::class, 'sale_invoice_id');
+    }
+
+    public function attachments()
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
     }
 
     /** إجمالي المدفوعات */
@@ -155,11 +171,22 @@ class SaleInvoice extends Model
 
         DB::beginTransaction();
         try {
+            $batchService = app(BatchService::class);
             foreach ($this->items as $item) {
                 $warehouseId = $item->warehouse_id ?? $this->warehouse_id;
+                $product = Product::find($item->product_id);
+                $warehouse = Warehouse::find($warehouseId);
+                $batchId = null;
+                if ($product && $warehouse) {
+                    $batch = $batchService->getFIFOBatch($product, $warehouse, (float) $item->quantity);
+                    if ($batch) {
+                        $batchId = $batch->id;
+                    }
+                }
                 StockMovement::record([
                     'type' => 'out',
                     'product_id' => $item->product_id,
+                    'batch_id' => $batchId,
                     'warehouse_id' => $warehouseId,
                     'quantity' => $item->quantity,
                     'movement_date' => $this->invoice_date,
@@ -170,6 +197,12 @@ class SaleInvoice extends Model
             }
             $this->update(['status' => self::STATUS_CONFIRMED]);
             $this->updatePaymentStatus();
+            if ($this->coupon_id) {
+                \App\Models\Coupon::where('id', $this->coupon_id)->increment('used_count');
+            }
+            if ($this->customer_id) {
+                app(LoyaltyService::class)->earnPoints($this);
+            }
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();

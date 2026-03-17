@@ -7,10 +7,12 @@ use App\Models\Branch;
 use App\Models\Customer;
 use App\Models\PaymentMethod;
 use App\Models\Product;
+use App\Models\Coupon;
 use App\Models\SaleInvoice;
 use App\Models\SalePayment;
 use App\Models\Warehouse;
 use App\Models\Treasury;
+use App\Services\Loyalty\LoyaltyService;
 use App\Services\Pricing\PricingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +26,7 @@ class SaleInvoiceController extends Controller
         $this->middleware('permission:sale-invoice-create')->only(['create', 'store']);
         $this->middleware('permission:sale-invoice-edit')->only(['edit', 'update']);
         $this->middleware('permission:sale-invoice-delete')->only('destroy');
-        $this->middleware('permission:sale-invoice-show')->only('show');
+        $this->middleware('permission:sale-invoice-show')->only(['show', 'print']);
         $this->middleware('permission:sale-invoice-confirm')->only('confirm');
     }
 
@@ -104,6 +106,7 @@ class SaleInvoiceController extends Controller
                 'payment_status' => SaleInvoice::PAYMENT_STATUS_PENDING,
                 'status' => SaleInvoice::STATUS_DRAFT,
                 'user_id' => auth()->id(),
+                'coupon_id' => null,
                 'notes' => $validated['notes'] ?? null,
             ]);
 
@@ -132,6 +135,21 @@ class SaleInvoiceController extends Controller
             }
 
             $invoice->recalculateTotals();
+            if (!empty($validated['coupon_code'])) {
+                $subtotal = (float) $invoice->items()->sum('total');
+                $result = Coupon::validateAndGetDiscount($validated['coupon_code'], $subtotal);
+                if ($result['valid'] && isset($result['coupon_id'])) {
+                    $coupon = Coupon::find($result['coupon_id']);
+                    if ($coupon) {
+                        $invoice->update([
+                            'coupon_id' => $coupon->id,
+                            'discount_type' => $coupon->type,
+                            'discount_value' => $coupon->type === Coupon::TYPE_PERCENT ? $coupon->value : $result['discount'],
+                        ]);
+                        $invoice->recalculateTotals();
+                    }
+                }
+            }
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -144,11 +162,20 @@ class SaleInvoiceController extends Controller
 
     public function show(SaleInvoice $saleInvoice)
     {
-        $saleInvoice->load(['branch', 'customer', 'warehouse', 'user', 'items.product', 'payments.paymentMethod', 'payments.treasury']);
+        $saleInvoice->load(['branch', 'customer', 'warehouse', 'user', 'coupon', 'items.product', 'payments.paymentMethod', 'payments.treasury']);
         $paymentMethods = PaymentMethod::getActiveForSelect();
         $treasuries = Treasury::getActiveForSelect();
 
         return view('admin.pages.sales.invoices.show', compact('saleInvoice', 'paymentMethods', 'treasuries'));
+    }
+
+    /**
+     * صفحة طباعة الفاتورة (فتح في نافذة جديدة للطباعة).
+     */
+    public function print(SaleInvoice $saleInvoice)
+    {
+        $saleInvoice->load(['branch', 'customer', 'warehouse', 'user', 'coupon', 'items.product']);
+        return view('admin.pages.sales.invoices.print', compact('saleInvoice'));
     }
 
     public function edit(SaleInvoice $saleInvoice)
@@ -182,6 +209,7 @@ class SaleInvoiceController extends Controller
             'tax_rate' => 'nullable|numeric|min:0|max:100',
             'discount_type' => 'nullable|in:fixed,percent',
             'discount_value' => 'nullable|numeric|min:0',
+            'coupon_code' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
@@ -200,6 +228,7 @@ class SaleInvoiceController extends Controller
                 'tax_rate' => $validated['tax_rate'] ?? 0,
                 'discount_type' => $validated['discount_type'] ?? null,
                 'discount_value' => $validated['discount_value'] ?? 0,
+                'coupon_id' => null,
                 'notes' => $validated['notes'] ?? null,
             ]);
 
@@ -230,6 +259,21 @@ class SaleInvoiceController extends Controller
             }
 
             $saleInvoice->recalculateTotals();
+            if (!empty($validated['coupon_code'])) {
+                $subtotal = (float) $saleInvoice->items()->sum('total');
+                $result = Coupon::validateAndGetDiscount($validated['coupon_code'], $subtotal);
+                if ($result['valid'] && isset($result['coupon_id'])) {
+                    $coupon = Coupon::find($result['coupon_id']);
+                    if ($coupon) {
+                        $saleInvoice->update([
+                            'coupon_id' => $coupon->id,
+                            'discount_type' => $coupon->type,
+                            'discount_value' => $coupon->type === Coupon::TYPE_PERCENT ? $coupon->value : $result['discount'],
+                        ]);
+                        $saleInvoice->recalculateTotals();
+                    }
+                }
+            }
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -314,6 +358,64 @@ class SaleInvoiceController extends Controller
 
         return redirect()->route('admin.sale-invoices.show', $saleInvoice)
             ->with('success', 'تم تسجيل الدفعة بنجاح.');
+    }
+
+    /**
+     * استبدال نقاط الولاء: خصم من رصيد العميل وتسجيل مبلغ معادل كدفعة على الفاتورة.
+     */
+    public function redeemPoints(Request $request, SaleInvoice $saleInvoice, LoyaltyService $loyaltyService)
+    {
+        if ($saleInvoice->status !== SaleInvoice::STATUS_CONFIRMED) {
+            return redirect()->route('admin.sale-invoices.show', $saleInvoice)
+                ->with('error', 'يُطبّق استبدال النقاط على الفواتير المؤكدة فقط.');
+        }
+
+        $customer = $saleInvoice->customer;
+        if (!$customer) {
+            return redirect()->route('admin.sale-invoices.show', $saleInvoice)
+                ->with('error', 'الفاتورة بدون عميل. لا يمكن استبدال النقاط.');
+        }
+
+        $validated = $request->validate([
+            'points' => 'required|integer|min:1',
+        ]);
+
+        $points = (int) $validated['points'];
+        $balance = (int) $customer->loyalty_points;
+        if ($points > $balance) {
+            return redirect()->route('admin.sale-invoices.show', $saleInvoice)
+                ->with('error', 'رصيد النقاط المتاح: ' . $balance . '. لا يمكن استبدال ' . $points . ' نقطة.');
+        }
+
+        $remaining = $saleInvoice->remaining_amount;
+        $discountAmount = $loyaltyService->redeemPoints($customer, $points, $saleInvoice);
+        if ($discountAmount <= 0) {
+            return redirect()->route('admin.sale-invoices.show', $saleInvoice)
+                ->with('error', 'لم يتم تطبيق الاستبدال.');
+        }
+        $amountToApply = min($discountAmount, $remaining);
+
+        $paymentMethod = PaymentMethod::where('is_active', true)->first();
+        if (!$paymentMethod) {
+            return redirect()->route('admin.sale-invoices.show', $saleInvoice)
+                ->with('error', 'يجب وجود طريقة دفع نشطة واحدة على الأقل.');
+        }
+
+        SalePayment::create([
+            'sale_invoice_id' => $saleInvoice->id,
+            'amount' => $amountToApply,
+            'payment_method_id' => $paymentMethod->id,
+            'treasury_id' => null,
+            'payment_date' => now()->format('Y-m-d'),
+            'reference' => null,
+            'user_id' => auth()->id(),
+            'notes' => 'استبدال ' . $points . ' نقطة ولاء',
+        ]);
+
+        $saleInvoice->updatePaymentStatus();
+
+        return redirect()->route('admin.sale-invoices.show', $saleInvoice)
+            ->with('success', 'تم استبدال ' . $points . ' نقطة وتسجيل مبلغ ' . number_format($amountToApply, 2) . ' كدفعة على الفاتورة.');
     }
 
     /**

@@ -53,12 +53,16 @@ class CustomerController extends Controller
             'email' => 'nullable|email|max:255',
             'address' => 'nullable|string',
             'opening_balance' => 'nullable|numeric',
+            'price_list_id' => 'nullable|exists:price_lists,id',
+            'segment_id' => 'nullable|exists:customer_segments,id',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['opening_balance'] = $validated['opening_balance'] ?? 0;
+        $validated['price_list_id'] = $validated['price_list_id'] ?? null;
+        $validated['segment_id'] = $validated['segment_id'] ?? null;
 
         Customer::create($validated);
 
@@ -99,12 +103,16 @@ class CustomerController extends Controller
             'email' => 'nullable|email|max:255',
             'address' => 'nullable|string',
             'opening_balance' => 'nullable|numeric',
+            'price_list_id' => 'nullable|exists:price_lists,id',
+            'segment_id' => 'nullable|exists:customer_segments,id',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);
         $validated['opening_balance'] = $validated['opening_balance'] ?? 0;
+        $validated['price_list_id'] = $validated['price_list_id'] ?? null;
+        $validated['segment_id'] = $validated['segment_id'] ?? null;
 
         $customer->update($validated);
 

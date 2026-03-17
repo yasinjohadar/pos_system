@@ -64,6 +64,14 @@
                                 <td>{{ number_format($customer->opening_balance, 2) }}</td>
                             </tr>
                             <tr>
+                                <td class="text-muted">شريحة العملاء:</td>
+                                <td>{{ $customer->segment ? $customer->segment->name : '—' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">نقاط الولاء:</td>
+                                <td>{{ $customer->loyalty_points }} نقطة</td>
+                            </tr>
+                            <tr>
                                 <td class="text-muted">إجمالي المبيعات:</td>
                                 <td>{{ number_format($customer->total_sales, 2) }}</td>
                             </tr>

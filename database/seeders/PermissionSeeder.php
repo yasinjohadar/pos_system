@@ -111,6 +111,10 @@ class PermissionSeeder extends Seeder
             "sale-return-create",
             "sale-return-show",
             "sale-return-complete",
+            "coupon-list",
+            "coupon-create",
+            "coupon-edit",
+            "coupon-delete",
 
             // المشتريات
             "supplier-list",
@@ -143,6 +147,29 @@ class PermissionSeeder extends Seeder
             "price-list-create",
             "price-list-edit",
             "price-list-delete",
+
+            // شرائح العملاء ونقاط الولاء
+            "customer-segment-list",
+            "customer-segment-create",
+            "customer-segment-edit",
+            "customer-segment-delete",
+            "loyalty-list",
+            "loyalty-adjust",
+
+            // المرحلة 4 - صلاحيات إضافية وسجل التدقيق
+            "discount_above_10",
+            "edit_confirmed_invoice",
+            "cancel_financial_transaction",
+            "view_all_branches",
+            "manage_audit_logs",
+            "chart-of-account-list",
+            "chart-of-account-create",
+            "chart-of-account-edit",
+            "chart-of-account-delete",
+            "journal-entry-list",
+            "journal-entry-show",
+            "attachment-list",
+            "attachment-delete",
         ];
 
         foreach ($permissions as $key => $permission) {

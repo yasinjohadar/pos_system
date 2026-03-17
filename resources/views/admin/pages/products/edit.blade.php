@@ -18,6 +18,18 @@
 
         <div class="row">
             <div class="col-lg-8">
+                @if(session('success'))
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                @endif
+                @if(session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                @endif
                 @if($errors->any())
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
                         <ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
@@ -167,6 +179,47 @@
                             <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="add-price-row">
                                 <i class="fas fa-plus me-1"></i> إضافة سعر
                             </button>
+
+                            <h6 class="mb-2 mt-4">باركودات إضافية</h6>
+                            <p class="text-muted small">الباركود الرئيسي أعلاه. يمكنك إضافة رموز إضافية (مثلاً لعبوات مختلفة) للبحث السريع.</p>
+                            <div class="table-responsive mb-2">
+                                <table class="table table-bordered table-sm">
+                                    <thead class="table-light">
+                                        <tr><th>الباركود</th><th>وصف</th><th width="80">إجراء</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($product->barcodes as $pb)
+                                            <tr>
+                                                <td>{{ $pb->barcode }}</td>
+                                                <td>{{ $pb->description ?? '—' }}</td>
+                                                <td>
+                                                    <form action="{{ route('admin.product-barcodes.destroy', $pb) }}" method="POST" class="d-inline" onsubmit="return confirm('حذف هذا الباركود؟');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr><td colspan="3" class="text-center text-muted">لا توجد باركودات إضافية.</td></tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                            <form action="{{ route('admin.products.barcodes.store', $product) }}" method="POST" class="row g-2 align-items-end mb-4">
+                                @csrf
+                                <div class="col-auto">
+                                    <label class="form-label small mb-0">باركود جديد</label>
+                                    <input type="text" name="barcode" class="form-control form-control-sm" placeholder="رقم الباركود" required maxlength="100">
+                                </div>
+                                <div class="col-auto">
+                                    <label class="form-label small mb-0">وصف (اختياري)</label>
+                                    <input type="text" name="description" class="form-control form-control-sm" placeholder="مثلاً: علبة 12" maxlength="255">
+                                </div>
+                                <div class="col-auto">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary"><i class="fas fa-plus me-1"></i> إضافة</button>
+                                </div>
+                            </form>
 
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> حفظ</button>

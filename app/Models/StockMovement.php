@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\ProductBatch;
 
 class StockMovement extends Model
 {
     protected $fillable = [
         'type',
         'product_id',
+        'batch_id',
         'warehouse_id',
         'quantity',
         'reference_type',
@@ -47,6 +49,11 @@ class StockMovement extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function batch()
+    {
+        return $this->belongsTo(ProductBatch::class, 'batch_id');
     }
 
     public function warehouse()
@@ -98,6 +105,13 @@ class StockMovement extends Model
             (int) $movement->warehouse_id,
             $movement->quantity
         );
+
+        if ($movement->batch_id && in_array($type, self::TYPES_OUT)) {
+            $batch = ProductBatch::find($movement->batch_id);
+            if ($batch) {
+                $batch->decrement('current_quantity', abs($movement->quantity));
+            }
+        }
 
         return $movement;
     }

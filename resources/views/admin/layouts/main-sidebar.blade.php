@@ -138,7 +138,7 @@
                                     </ul>
                                 </li>
                                 <!-- المبيعات -->
-                                <li class="slide has-sub {{ request()->routeIs('admin.sale-invoices.*') || request()->routeIs('admin.sale-returns.*') || request()->routeIs('admin.customers.*') || request()->routeIs('admin.payment-methods.*') || request()->routeIs('admin.treasuries.*') || request()->routeIs('admin.bank-accounts.*') || request()->routeIs('admin.financial-transfers.*') || request()->routeIs('admin.checks.*') || request()->routeIs('admin.promotions.*') || request()->routeIs('admin.price-lists.*') ? 'open active' : '' }}">
+                                <li class="slide has-sub {{ request()->routeIs('admin.sale-invoices.*') || request()->routeIs('admin.sale-returns.*') || request()->routeIs('admin.coupons.*') || request()->routeIs('admin.customers.*') || request()->routeIs('admin.payment-methods.*') || request()->routeIs('admin.treasuries.*') || request()->routeIs('admin.bank-accounts.*') || request()->routeIs('admin.financial-transfers.*') || request()->routeIs('admin.checks.*') || request()->routeIs('admin.promotions.*') || request()->routeIs('admin.price-lists.*') || request()->routeIs('admin.customer-segments.*') || request()->routeIs('admin.loyalty.*') || request()->routeIs('admin.cash-vouchers.*') || request()->routeIs('admin.fiscal-years.*') || request()->routeIs('admin.chart-of-accounts.*') || request()->routeIs('admin.journal-entries.*') || request()->routeIs('admin.reports.trial-balance.*') || request()->routeIs('admin.reports.income-statement.*') || request()->routeIs('admin.attachments.index') ? 'open active' : '' }}">
                                     <a href="javascript:void(0);" class="side-menu__item">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="side-menu__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
@@ -155,11 +155,20 @@
                                         <li class="slide {{ request()->routeIs('admin.sale-returns.*') ? 'active' : '' }}">
                                             <a href="{{ route('admin.sale-returns.index') }}" class="side-menu__item">مرتجعات البيع</a>
                                         </li>
+                                        <li class="slide {{ request()->routeIs('admin.coupons.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.coupons.index') }}" class="side-menu__item">كوبونات الخصم</a>
+                                        </li>
                                         <li class="slide {{ request()->routeIs('admin.promotions.*') ? 'active' : '' }}">
                                             <a href="{{ route('admin.promotions.index') }}" class="side-menu__item">العروض والخصومات</a>
                                         </li>
                                         <li class="slide {{ request()->routeIs('admin.price-lists.*') ? 'active' : '' }}">
                                             <a href="{{ route('admin.price-lists.index') }}" class="side-menu__item">قوائم الأسعار</a>
+                                        </li>
+                                        <li class="slide {{ request()->routeIs('admin.customer-segments.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.customer-segments.index') }}" class="side-menu__item">شرائح العملاء</a>
+                                        </li>
+                                        <li class="slide {{ request()->routeIs('admin.loyalty.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.loyalty.index') }}" class="side-menu__item">نقاط الولاء</a>
                                         </li>
                                         <li class="slide {{ request()->routeIs('admin.customers.*') ? 'active' : '' }}">
                                             <a href="{{ route('admin.customers.index') }}" class="side-menu__item">العملاء</a>
@@ -184,6 +193,21 @@
                                         </li>
                                         <li class="slide {{ request()->routeIs('admin.fiscal-years.*') ? 'active' : '' }}">
                                             <a href="{{ route('admin.fiscal-years.index') }}" class="side-menu__item">السنوات المالية</a>
+                                        </li>
+                                        <li class="slide {{ request()->routeIs('admin.chart-of-accounts.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.chart-of-accounts.index') }}" class="side-menu__item">شجرة الحسابات</a>
+                                        </li>
+                                        <li class="slide {{ request()->routeIs('admin.journal-entries.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.journal-entries.index') }}" class="side-menu__item">القيود اليومية</a>
+                                        </li>
+                                        <li class="slide {{ request()->routeIs('admin.reports.trial-balance.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.reports.trial-balance.index') }}" class="side-menu__item">ميزان المراجعة</a>
+                                        </li>
+                                        <li class="slide {{ request()->routeIs('admin.reports.income-statement.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.reports.income-statement.index') }}" class="side-menu__item">قائمة الدخل</a>
+                                        </li>
+                                        <li class="slide {{ request()->routeIs('admin.attachments.index') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.attachments.index') }}" class="side-menu__item">المرفقات</a>
                                         </li>
                                     </ul>
                                 </li>
@@ -244,6 +268,15 @@
                                         <li class="slide {{ request()->routeIs('admin.reports.taxes.*') ? 'active' : '' }}">
                                             <a href="{{ route('admin.reports.taxes.index') }}" class="side-menu__item">التقارير الضريبية</a>
                                         </li>
+                                        <li class="slide {{ request()->routeIs('admin.reports.product-performance.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.reports.product-performance.index') }}" class="side-menu__item">أداء المنتجات</a>
+                                        </li>
+                                        <li class="slide {{ request()->routeIs('admin.reports.customer-performance.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.reports.customer-performance.index') }}" class="side-menu__item">أداء العملاء</a>
+                                        </li>
+                                        <li class="slide {{ request()->routeIs('admin.reports.segments.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.reports.segments.index') }}" class="side-menu__item">تقرير الشرائح</a>
+                                        </li>
                                     </ul>
                                 </li>
 
@@ -268,9 +301,26 @@
                             </ul>
                                 </li>
 
+                                <!-- التدقيق -->
+                                <li class="slide has-sub {{ request()->routeIs('admin.audit-logs.*') ? 'open active' : '' }}">
+                                    <a href="javascript:void(0);" class="side-menu__item">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="side-menu__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                            <polyline points="14 2 14 8 20 8"/>
+                                            <line x1="16" y1="13" x2="8" y2="13"/>
+                                            <line x1="16" y1="17" x2="8" y2="17"/>
+                                        </svg>
+                                        <span class="side-menu__label">التدقيق</span>
+                                        <i class="fe fe-chevron-right side-menu__angle"></i>
+                                    </a>
+                                    <ul class="slide-menu child1">
+                                        <li class="slide {{ request()->routeIs('admin.audit-logs.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.audit-logs.index') }}" class="side-menu__item">سجل التدقيق</a>
+                                        </li>
+                                    </ul>
+                                </li>
+
                         <!-- End::slide -->
-
-
 
 <!-- إعدادات البريد -->
 <li class="slide has-sub {{ request()->routeIs('admin.settings.email.*') ? 'open active' : '' }}">

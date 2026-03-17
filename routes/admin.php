@@ -24,6 +24,7 @@ use App\Http\Controllers\Admin\WhatsAppWebhookController;
 use App\Http\Controllers\Admin\PaymentMethodController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\SaleInvoiceController;
+use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\SaleReturnController;
 use App\Http\Controllers\Admin\TreasuryController;
 use App\Http\Controllers\Admin\BankAccountController;
@@ -40,8 +41,19 @@ use App\Http\Controllers\Admin\Reports\ProfitReportController;
 use App\Http\Controllers\Admin\Reports\InventoryReportController;
 use App\Http\Controllers\Admin\Reports\PartnerReportController;
 use App\Http\Controllers\Admin\Reports\TaxReportController;
+use App\Http\Controllers\Admin\Reports\ProductPerformanceController;
+use App\Http\Controllers\Admin\Reports\CustomerPerformanceController;
+use App\Http\Controllers\Admin\Reports\SegmentReportController;
+use App\Http\Controllers\Admin\Reports\TrialBalanceController;
+use App\Http\Controllers\Admin\Reports\IncomeStatementController;
 use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\PriceListController;
+use App\Http\Controllers\Admin\CustomerSegmentController;
+use App\Http\Controllers\Admin\LoyaltyController;
+use App\Http\Controllers\Admin\AttachmentController;
+use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\ChartOfAccountController;
+use App\Http\Controllers\Admin\JournalEntryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -62,6 +74,9 @@ Route::middleware(['auth', 'check.user.active'])->prefix('admin')->name('admin.'
     // التصنيفات والوحدات والمنتجات
     Route::resource('categories', CategoryController::class);
     Route::resource('units', UnitController::class);
+    Route::get('products/search-by-barcode', [ProductController::class, 'searchByBarcode'])->name('products.search-by-barcode');
+    Route::post('products/{product}/barcodes', [ProductController::class, 'storeBarcode'])->name('products.barcodes.store');
+    Route::delete('product-barcodes/{productBarcode}', [ProductController::class, 'destroyBarcode'])->name('product-barcodes.destroy');
     Route::resource('products', ProductController::class);
 
     // إدارة المخزون
@@ -92,6 +107,15 @@ Route::middleware(['auth', 'check.user.active'])->prefix('admin')->name('admin.'
         Route::get('customers/aging', [PartnerReportController::class, 'customersAging'])->name('customers.aging');
         Route::get('suppliers/aging', [PartnerReportController::class, 'suppliersAging'])->name('suppliers.aging');
         Route::get('taxes', [TaxReportController::class, 'index'])->name('taxes.index');
+        Route::get('product-performance', [ProductPerformanceController::class, 'index'])->name('product-performance.index');
+        Route::get('product-performance/top', [ProductPerformanceController::class, 'top'])->name('product-performance.top');
+        Route::get('product-performance/no-sales', [ProductPerformanceController::class, 'noSales'])->name('product-performance.no-sales');
+        Route::get('customer-performance', [CustomerPerformanceController::class, 'index'])->name('customer-performance.index');
+        Route::get('customer-performance/top', [CustomerPerformanceController::class, 'top'])->name('customer-performance.top');
+        Route::get('customer-performance/inactive', [CustomerPerformanceController::class, 'inactive'])->name('customer-performance.inactive');
+        Route::get('segments', [SegmentReportController::class, 'index'])->name('segments.index');
+        Route::get('trial-balance', [TrialBalanceController::class, 'index'])->name('trial-balance.index');
+        Route::get('income-statement', [IncomeStatementController::class, 'index'])->name('income-statement.index');
     });
 
     // المبيعات
@@ -99,6 +123,15 @@ Route::middleware(['auth', 'check.user.active'])->prefix('admin')->name('admin.'
     Route::get('customers/{customer}/statement', [CustomerController::class, 'statement'])->name('customers.statement');
     Route::resource('customers', CustomerController::class);
     Route::get('sale-invoices/product-price', [SaleInvoiceController::class, 'getProductPrice'])->name('sale-invoices.product-price');
+    Route::post('coupons/validate', [CouponController::class, 'validateCoupon'])->name('coupons.validate');
+    Route::resource('coupons', CouponController::class)->except(['show'])->names([
+        'index' => 'coupons.index',
+        'create' => 'coupons.create',
+        'store' => 'coupons.store',
+        'edit' => 'coupons.edit',
+        'update' => 'coupons.update',
+        'destroy' => 'coupons.destroy',
+    ]);
     Route::resource('sale-invoices', SaleInvoiceController::class)->names([
         'index' => 'sale-invoices.index',
         'create' => 'sale-invoices.create',
@@ -108,7 +141,9 @@ Route::middleware(['auth', 'check.user.active'])->prefix('admin')->name('admin.'
         'update' => 'sale-invoices.update',
         'destroy' => 'sale-invoices.destroy',
     ]);
+    Route::get('sale-invoices/{saleInvoice}/print', [SaleInvoiceController::class, 'print'])->name('sale-invoices.print');
     Route::post('sale-invoices/{saleInvoice}/confirm', [SaleInvoiceController::class, 'confirm'])->name('sale-invoices.confirm');
+    Route::post('sale-invoices/{saleInvoice}/redeem-points', [SaleInvoiceController::class, 'redeemPoints'])->name('sale-invoices.redeem-points');
     Route::post('sale-invoices/{saleInvoice}/payments', [SaleInvoiceController::class, 'addPayment'])->name('sale-invoices.payments.store');
     Route::delete('sale-invoices/{saleInvoice}/payments/{payment}', [SaleInvoiceController::class, 'destroyPayment'])->name('sale-invoices.payments.destroy');
     Route::resource('sale-returns', SaleReturnController::class)->only(['index', 'create', 'store', 'show'])->names([
@@ -121,6 +156,10 @@ Route::middleware(['auth', 'check.user.active'])->prefix('admin')->name('admin.'
 
     Route::resource('promotions', PromotionController::class)->except(['show']);
     Route::resource('price-lists', PriceListController::class)->except(['show']);
+    Route::resource('customer-segments', CustomerSegmentController::class)->except(['show']);
+    Route::get('loyalty', [LoyaltyController::class, 'index'])->name('loyalty.index');
+    Route::get('loyalty/adjust', [LoyaltyController::class, 'adjustForm'])->name('loyalty.adjust-form');
+    Route::post('loyalty/adjust', [LoyaltyController::class, 'adjust'])->name('loyalty.adjust');
 
     Route::resource('treasuries', TreasuryController::class)->except(['show']);
 
@@ -167,6 +206,15 @@ Route::middleware(['auth', 'check.user.active'])->prefix('admin')->name('admin.'
         'show' => 'purchase-returns.show',
     ]);
     Route::post('purchase-returns/{purchaseReturn}/complete', [PurchaseReturnController::class, 'complete'])->name('purchase-returns.complete');
+
+    Route::post('attachments', [AttachmentController::class, 'store'])->name('attachments.store');
+    Route::delete('attachments/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
+
+    Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+    Route::resource('chart-of-accounts', ChartOfAccountController::class)->except(['show']);
+    Route::get('journal-entries', [JournalEntryController::class, 'index'])->name('journal-entries.index');
+    Route::get('journal-entries/{journalEntry}', [JournalEntryController::class, 'show'])->name('journal-entries.show');
+    Route::get('attachments', [AttachmentController::class, 'index'])->name('attachments.index');
 
     // ========== Email Settings Routes ==========
     Route::prefix('settings/email')->name('settings.email.')->group(function () {

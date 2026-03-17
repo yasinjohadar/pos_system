@@ -31,6 +31,7 @@
                     @endcan
                 @endif
                 <a href="{{ route('admin.sale-invoices.index') }}" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-right me-1"></i> رجوع</a>
+                <a href="{{ route('admin.sale-invoices.print', $saleInvoice) }}" target="_blank" class="btn btn-outline-secondary btn-sm"><i class="fas fa-print me-1"></i> طباعة</a>
                 @if($saleInvoice->status === \App\Models\SaleInvoice::STATUS_CONFIRMED)
                 <a href="{{ route('admin.sale-returns.create', ['sale_invoice_id' => $saleInvoice->id]) }}" class="btn btn-outline-warning btn-sm"><i class="fas fa-undo me-1"></i> مرتجع</a>
                 @endif
@@ -180,6 +181,27 @@
                     </div>
                 </div>
                 @endif
+
+                @if($saleInvoice->status === \App\Models\SaleInvoice::STATUS_CONFIRMED && $saleInvoice->customer && (int) $saleInvoice->customer->loyalty_points > 0 && $saleInvoice->remaining_amount > 0)
+                <div class="card shadow-sm border-0 mb-4 border-primary">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fas fa-gift me-1"></i> استبدال نقاط الولاء</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-2">رصيد العميل: <strong>{{ $saleInvoice->customer->loyalty_points }}</strong> نقطة. المتبقي على الفاتورة: <strong>{{ number_format($saleInvoice->remaining_amount, 2) }}</strong></p>
+                        <form action="{{ route('admin.sale-invoices.redeem-points', $saleInvoice) }}" method="POST" class="row g-3 align-items-end">
+                            @csrf
+                            <div class="col-md-4">
+                                <label class="form-label">عدد النقاط المراد استبدالها <span class="text-danger">*</span></label>
+                                <input type="number" name="points" class="form-control" min="1" max="{{ $saleInvoice->customer->loyalty_points }}" value="1" required>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-outline-primary btn-sm"><i class="fas fa-exchange-alt me-1"></i> استبدال النقاط</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                @endif
             </div>
 
             <div class="col-lg-4">
@@ -191,7 +213,7 @@
                         <table class="table table-borderless mb-0">
                             <tr><td>المجموع الفرعي:</td><td class="text-end">{{ number_format($saleInvoice->subtotal, 2) }}</td></tr>
                             @if($saleInvoice->discount_amount > 0)
-                            <tr><td>الخصم:</td><td class="text-end">- {{ number_format($saleInvoice->discount_amount, 2) }}</td></tr>
+                            <tr><td>الخصم@if($saleInvoice->coupon): (كوبون {{ $saleInvoice->coupon->code }})@endif:</td><td class="text-end">- {{ number_format($saleInvoice->discount_amount, 2) }}</td></tr>
                             @endif
                             @if($saleInvoice->tax_amount > 0)
                             <tr><td>الضريبة ({{ $saleInvoice->tax_rate }}%):</td><td class="text-end">{{ number_format($saleInvoice->tax_amount, 2) }}</td></tr>

@@ -19,7 +19,8 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             PaymentMethodSeeder::class,
             TreasurySeeder::class,
-            CategoryAndProductSeeder::class,
+            LargeMasterDataSeeder::class,
+            ChartOfAccountSeeder::class,
         ]);
 
         // إنشاء مستخدم تجريبي إضافي

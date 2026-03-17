@@ -13,18 +13,31 @@ class Customer extends Model
         'address',
         'opening_balance',
         'price_list_id',
+        'segment_id',
+        'loyalty_points',
         'notes',
         'is_active',
     ];
 
     protected $casts = [
         'opening_balance' => 'decimal:2',
+        'loyalty_points' => 'integer',
         'is_active' => 'boolean',
     ];
 
     public function priceList()
     {
         return $this->belongsTo(PriceList::class);
+    }
+
+    public function segment()
+    {
+        return $this->belongsTo(CustomerSegment::class, 'segment_id');
+    }
+
+    public function loyaltyTransactions()
+    {
+        return $this->hasMany(LoyaltyTransaction::class);
     }
 
     public function saleInvoices()

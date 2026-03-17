@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Reports\SalesReportService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SalesReportController extends Controller
 {
@@ -25,7 +26,33 @@ class SalesReportController extends Controller
 
         $summary = $service->getDailySummary($date, $branchId ? (int) $branchId : null);
 
+        if ($request->input('format') === 'csv') {
+            return $this->dailyCsv($summary, $date);
+        }
+
         return view('admin.pages.reports.sales.daily', compact('summary', 'date', 'branchId'));
+    }
+
+    private function dailyCsv(array $summary, Carbon $date): StreamedResponse
+    {
+        $filename = 'sales-daily-' . $date->format('Y-m-d') . '.csv';
+        return new StreamedResponse(function () use ($summary, $date) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['التاريخ', 'عدد الفواتير', 'إجمالي المبيعات', 'المرتجعات', 'صافي المبيعات', 'الضريبة', 'الخصم']);
+            fputcsv($out, [
+                $date->format('Y-m-d'),
+                $summary['invoices_count'],
+                $summary['total_sales'],
+                $summary['total_returns'],
+                $summary['net_sales'],
+                $summary['tax_amount'],
+                $summary['discount_amount'],
+            ]);
+            fclose($out);
+        }, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 
     public function monthly(Request $request, SalesReportService $service)
@@ -36,7 +63,28 @@ class SalesReportController extends Controller
 
         $chart = $service->getMonthlySummary($year, $month, $branchId ? (int) $branchId : null);
 
+        if ($request->input('format') === 'csv') {
+            return $this->monthlyCsv($chart, $year, $month);
+        }
+
         return view('admin.pages.reports.sales.monthly', compact('chart', 'year', 'month', 'branchId'));
+    }
+
+    private function monthlyCsv(array $chart, int $year, int $month): StreamedResponse
+    {
+        $filename = "sales-monthly-{$year}-{$month}.csv";
+        return new StreamedResponse(function () use ($chart) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['التاريخ', 'إجمالي المبيعات']);
+            foreach ($chart['labels'] ?? [] as $i => $label) {
+                $total = $chart['totals'][$i] ?? 0;
+                fputcsv($out, [$label, $total]);
+            }
+            fclose($out);
+        }, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 }
 

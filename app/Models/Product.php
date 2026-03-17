@@ -63,6 +63,16 @@ class Product extends Model
         return $this->hasMany(StockMovement::class);
     }
 
+    public function barcodes()
+    {
+        return $this->hasMany(ProductBarcode::class);
+    }
+
+    public function batches()
+    {
+        return $this->hasMany(ProductBatch::class);
+    }
+
     /**
      * Get effective price for a branch and type (or base_price if no override).
      */

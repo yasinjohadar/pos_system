@@ -73,6 +73,16 @@
                                 @error('price_list_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="mb-3">
+                                <label for="segment_id" class="form-label">شريحة العملاء</label>
+                                <select id="segment_id" name="segment_id" class="form-select @error('segment_id') is-invalid @enderror">
+                                    <option value="">بدون شريحة</option>
+                                    @foreach(\App\Models\CustomerSegment::where('is_active', true)->orderBy('name')->get() as $seg)
+                                        <option value="{{ $seg->id }}" {{ old('segment_id') == $seg->id ? 'selected' : '' }}>{{ $seg->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('segment_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="mb-3">
                                 <label for="notes" class="form-label">ملاحظات</label>
                                 <textarea class="form-control @error('notes') is-invalid @enderror" id="notes" name="notes" rows="2">{{ old('notes') }}</textarea>
                                 @error('notes')<div class="invalid-feedback">{{ $message }}</div>@enderror

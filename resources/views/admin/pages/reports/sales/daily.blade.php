@@ -11,6 +11,9 @@
             <div class="my-auto">
                 <h5 class="page-title fs-21 mb-1">تقرير المبيعات اليومي</h5>
             </div>
+            <div>
+                <a href="{{ route('admin.reports.sales.daily', array_merge(request()->only(['date', 'branch_id']), ['format' => 'csv'])) }}" class="btn btn-outline-success btn-sm"><i class="fas fa-file-csv me-1"></i> تصدير CSV</a>
+            </div>
         </div>
 
         <div class="card shadow-sm border-0 mb-4">
