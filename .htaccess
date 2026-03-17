@@ -1,0 +1,18 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # لو تم الوصول عبر /public ضمن الرابط، رجّعه للرابط الأساسي
+    RewriteCond %{THE_REQUEST} \s/+public/ [NC]
+    RewriteRule ^public/(.*)$ /$1 [R=301,L]
+
+    # لا تعيد الكتابة إذا كان الطلب فعلاً داخل /public
+    RewriteCond %{REQUEST_URI} !^/public/ [NC]
+
+    # لا تعيد الكتابة إذا كان الملف/المجلد موجوداً في الجذر (نادر)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+
+    # مرّر كل الطلبات إلى public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
