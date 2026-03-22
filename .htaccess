@@ -1,12 +1,11 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteBase /
 
-    # Redirect /public/ to root
-    RewriteCond %{REQUEST_URI} ^/public/
-    RewriteRule ^public/(.*?)$ /$1 [L,R=301]
-
-    # Route all requests to public folder if it exists
+    # If the request is not for a valid file or directory
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
+
+    # Route everything to public folder
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
