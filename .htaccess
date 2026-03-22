@@ -1,7 +1,7 @@
 RewriteEngine On
 RewriteBase /pos_system/
 
-RewriteCond %{REQUEST_URI} !^/pos_system/public/
+RewriteCond %{REQUEST_URI} !^/pos_system/
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ public/$1 [L]
