@@ -4,6 +4,10 @@
     تعديل العميل
 @stop
 
+@section('css')
+    @include('admin.components.premium.styles')
+@stop
+
 @section('content')
 <div class="main-content app-content">
     <div class="container-fluid">
@@ -41,9 +45,11 @@
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="phone" class="form-label">الهاتف</label>
-                                    <input type="text" class="form-control @error('phone') is-invalid @enderror" id="phone" name="phone" value="{{ old('phone', $customer->phone) }}">
-                                    @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                    @include('admin.components.premium.phone-input', [
+                                        'name' => 'phone',
+                                        'value' => old('phone', $customer->phone),
+                                        'label' => 'الهاتف',
+                                    ])
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="email" class="form-label">البريد الإلكتروني</label>
@@ -109,4 +115,9 @@
         </div>
     </div>
 </div>
+@stop
+
+@section('script')
+    @include('admin.components.premium.scripts')
+    <script>AdminPremium.initPhoneInputs();</script>
 @stop

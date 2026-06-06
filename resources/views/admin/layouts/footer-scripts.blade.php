@@ -37,6 +37,12 @@
 <!-- Custom JS -->
 <script src="{{ asset('assets/js/custom.js') }}"></script>
 
+<!-- Shared Delete Modal -->
+<script src="{{ asset('assets/js/delete-modal.js') }}"></script>
+
+<!-- Shared Password Change Modal -->
+<script src="{{ asset('assets/js/password-modal.js') }}"></script>
+
 <!-- Page Specific Scripts -->
 @yield('script')
 @stack('scripts')

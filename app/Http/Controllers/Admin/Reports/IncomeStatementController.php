@@ -61,6 +61,12 @@ class IncomeStatementController extends Controller
             ]);
         }
 
+        if ($request->ajax()) {
+            return response()->json([
+                'summary' => view('admin.pages.reports.income-statement.partials.summary', compact('revenue', 'expense', 'netIncome'))->render(),
+            ]);
+        }
+
         return view('admin.pages.reports.income-statement.index', compact('from', 'to', 'revenue', 'expense', 'netIncome'));
     }
 }

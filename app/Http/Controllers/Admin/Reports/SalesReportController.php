@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Reports;
 
 use App\Http\Controllers\Controller;
+use App\Models\Branch;
 use App\Services\Reports\SalesReportService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -25,12 +26,19 @@ class SalesReportController extends Controller
         $branchId = $request->input('branch_id');
 
         $summary = $service->getDailySummary($date, $branchId ? (int) $branchId : null);
+        $branches = Branch::where('is_active', true)->orderBy('name')->get();
 
         if ($request->input('format') === 'csv') {
             return $this->dailyCsv($summary, $date);
         }
 
-        return view('admin.pages.reports.sales.daily', compact('summary', 'date', 'branchId'));
+        if ($request->ajax()) {
+            return response()->json([
+                'summary' => view('admin.pages.reports.sales.partials.daily-summary', compact('summary', 'date'))->render(),
+            ]);
+        }
+
+        return view('admin.pages.reports.sales.daily', compact('summary', 'date', 'branchId', 'branches'));
     }
 
     private function dailyCsv(array $summary, Carbon $date): StreamedResponse

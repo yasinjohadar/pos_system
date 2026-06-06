@@ -32,7 +32,14 @@ class CheckController extends Controller
             $query->where('due_date', '<=', $request->input('to_date'));
         }
 
-        $checks = $query->paginate(15);
+        $checks = $query->paginate(15)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.sales.checks.partials.table-rows', compact('checks'))->render(),
+                'pagination' => view('admin.pages.sales.checks.partials.pagination', compact('checks'))->render(),
+            ]);
+        }
 
         return view('admin.pages.sales.checks.index', compact('checks'));
     }

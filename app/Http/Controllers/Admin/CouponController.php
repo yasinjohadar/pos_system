@@ -30,6 +30,13 @@ class CouponController extends Controller
 
         $coupons = $query->paginate(15)->withQueryString();
 
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.sales.coupons.partials.table-rows', compact('coupons'))->render(),
+                'pagination' => view('admin.pages.sales.coupons.partials.pagination', compact('coupons'))->render(),
+            ]);
+        }
+
         return view('admin.pages.sales.coupons.index', compact('coupons'));
     }
 

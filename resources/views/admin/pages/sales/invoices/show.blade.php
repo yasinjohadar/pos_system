@@ -4,238 +4,325 @@
     فاتورة البيع {{ $saleInvoice->number }}
 @stop
 
+@section('css')
+    @include('admin.components.premium.styles')
+@stop
+
 @section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
-            <div class="my-auto">
-                <h5 class="page-title fs-21 mb-1">فاتورة البيع: {{ $saleInvoice->number }}</h5>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-                @if($saleInvoice->status === \App\Models\SaleInvoice::STATUS_DRAFT)
-                    @can('sale-invoice-confirm')
-                    <form action="{{ route('admin.sale-invoices.confirm', $saleInvoice) }}" method="POST" class="d-inline" onsubmit="return confirm('تأكيد الفاتورة سينشئ حركات صرف مخزون. متابعة؟');">
-                        @csrf
-                        <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-check me-1"></i> تأكيد الفاتورة</button>
-                    </form>
-                    @endcan
-                    @can('sale-invoice-edit')
-                    <a href="{{ route('admin.sale-invoices.edit', $saleInvoice) }}" class="btn btn-primary btn-sm"><i class="fas fa-edit me-1"></i> تعديل</a>
-                    @endcan
-                    @can('sale-invoice-delete')
-                    <form action="{{ route('admin.sale-invoices.destroy', $saleInvoice) }}" method="POST" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف الفاتورة؟');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash me-1"></i> حذف</button>
-                    </form>
-                    @endcan
-                @endif
-                <a href="{{ route('admin.sale-invoices.index') }}" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-right me-1"></i> رجوع</a>
-                <a href="{{ route('admin.sale-invoices.print', $saleInvoice) }}" target="_blank" class="btn btn-outline-secondary btn-sm"><i class="fas fa-print me-1"></i> طباعة</a>
-                @if($saleInvoice->status === \App\Models\SaleInvoice::STATUS_CONFIRMED)
-                <a href="{{ route('admin.sale-returns.create', ['sale_invoice_id' => $saleInvoice->id]) }}" class="btn btn-outline-warning btn-sm"><i class="fas fa-undo me-1"></i> مرتجع</a>
-                @endif
-            </div>
-        </div>
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
 
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-        @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
+                @include('admin.components.premium.flash')
 
-        <div class="row">
-            <div class="col-lg-8">
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header">
-                        <h6 class="mb-0">بيانات الفاتورة</h6>
+                <div class="users-header">
+                    <h5 class="users-page-title">فاتورة البيع: {{ $saleInvoice->number }}</h5>
+                    <div class="users-header-actions">
+                        @if ($saleInvoice->status === \App\Models\SaleInvoice::STATUS_DRAFT)
+                            @can('sale-invoice-confirm')
+                                <form action="{{ route('admin.sale-invoices.confirm', $saleInvoice) }}" method="POST" class="d-inline"
+                                    onsubmit="return confirm('تأكيد الفاتورة سينشئ حركات صرف مخزون. متابعة؟');">
+                                    @csrf
+                                    <button type="submit" class="users-btn-submit" style="padding: 0.5rem 1rem;">
+                                        <i class="fas fa-check"></i> تأكيد الفاتورة
+                                    </button>
+                                </form>
+                            @endcan
+                            @can('sale-invoice-edit')
+                                <a href="{{ route('admin.sale-invoices.edit', $saleInvoice) }}" class="users-btn-secondary">
+                                    <i class="fas fa-edit"></i> تعديل
+                                </a>
+                            @endcan
+                            @can('sale-invoice-delete')
+                                <form action="{{ route('admin.sale-invoices.destroy', $saleInvoice) }}" method="POST" class="d-inline"
+                                    onsubmit="return confirm('هل أنت متأكد من حذف الفاتورة؟');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="users-action-btn users-action-btn--delete" title="حذف">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            @endcan
+                        @endif
+                        <a href="{{ route('admin.sale-invoices.print', $saleInvoice) }}" target="_blank" class="users-btn-secondary">
+                            <i class="fas fa-print"></i> طباعة
+                        </a>
+                        @if ($saleInvoice->status === \App\Models\SaleInvoice::STATUS_CONFIRMED)
+                            <a href="{{ route('admin.sale-returns.create', ['sale_invoice_id' => $saleInvoice->id]) }}" class="users-btn-secondary">
+                                <i class="fas fa-undo"></i> مرتجع
+                            </a>
+                        @endif
+                        <a href="{{ route('admin.sale-invoices.index') }}" class="users-btn-secondary">
+                            <i class="fas fa-arrow-right"></i> رجوع
+                        </a>
                     </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <table class="table table-borderless mb-0">
-                                    <tr><td class="text-muted">الفرع:</td><td>{{ $saleInvoice->branch->name ?? '—' }}</td></tr>
-                                    <tr><td class="text-muted">العميل:</td><td>{{ $saleInvoice->customer->name ?? 'عميل نقدي' }}</td></tr>
-                                    <tr><td class="text-muted">مخزن الصرف:</td><td>{{ $saleInvoice->warehouse->name ?? '—' }}</td></tr>
-                                    <tr><td class="text-muted">التاريخ:</td><td>{{ $saleInvoice->invoice_date->format('Y-m-d') }}</td></tr>
-                                    <tr><td class="text-muted">الحالة:</td>
-                                        <td>
-                                            @if($saleInvoice->status === 'draft')
-                                                <span class="badge bg-secondary">مسودة</span>
-                                            @elseif($saleInvoice->status === 'confirmed')
-                                                <span class="badge bg-success">مؤكدة</span>
+                </div>
+
+                <div class="users-detail-grid">
+                    <div class="users-detail-card">
+                        <div class="users-detail-card__header">
+                            <h6 class="users-detail-card__title"><i class="fas fa-info-circle"></i> بيانات الفاتورة</h6>
+                        </div>
+                        <div class="users-detail-card__body">
+                            <div class="users-detail-list">
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-building"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">الفرع</span>
+                                        <div class="users-detail-item__value">{{ $saleInvoice->branch->name ?? '—' }}</div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-user"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">العميل</span>
+                                        <div class="users-detail-item__value">{{ $saleInvoice->customer->name ?? 'عميل نقدي' }}</div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-warehouse"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">مخزن الصرف</span>
+                                        <div class="users-detail-item__value">{{ $saleInvoice->warehouse->name ?? '—' }}</div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-calendar"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">التاريخ</span>
+                                        <div class="users-detail-item__value">{{ $saleInvoice->invoice_date->format('Y-m-d') }}</div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-flag"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">الحالة</span>
+                                        <div class="users-detail-item__value">
+                                            @if ($saleInvoice->status === 'draft')
+                                                <span class="users-badge users-badge--role" style="background: rgba(107, 114, 128, 0.15); color: #4b5563;">مسودة</span>
+                                            @elseif ($saleInvoice->status === 'confirmed')
+                                                <span class="users-badge users-badge--active">مؤكدة</span>
                                             @else
-                                                <span class="badge bg-danger">ملغاة</span>
+                                                <span class="users-badge users-badge--inactive">ملغاة</span>
                                             @endif
-                                        </td>
-                                    </tr>
-                                </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-credit-card"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">حالة الدفع</span>
+                                        <div class="users-detail-item__value">
+                                            @if ($saleInvoice->payment_status === 'paid')
+                                                <span class="users-badge users-badge--active">مدفوع</span>
+                                            @elseif ($saleInvoice->payment_status === 'partial')
+                                                <span class="users-badge users-badge--role" style="background: rgba(245, 158, 11, 0.15); color: #d97706;">جزئي</span>
+                                            @else
+                                                <span class="users-badge users-badge--role">معلق</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-user-tie"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">المستخدم</span>
+                                        <div class="users-detail-item__value">{{ $saleInvoice->user->name ?? '—' }}</div>
+                                    </div>
+                                </div>
+                                @if ($saleInvoice->notes)
+                                    <div class="users-detail-item">
+                                        <div class="users-detail-item__icon"><i class="fas fa-sticky-note"></i></div>
+                                        <div class="users-detail-item__content">
+                                            <span class="users-detail-item__label">ملاحظات</span>
+                                            <div class="users-detail-item__value">{{ $saleInvoice->notes }}</div>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
-                            <div class="col-md-6">
-                                <table class="table table-borderless mb-0">
-                                    <tr><td class="text-muted">حالة الدفع:</td>
-                                        <td>
-                                            @if($saleInvoice->payment_status === 'paid')
-                                                <span class="badge bg-success">مدفوع</span>
-                                            @elseif($saleInvoice->payment_status === 'partial')
-                                                <span class="badge bg-warning">جزئي</span>
-                                            @else
-                                                <span class="badge bg-secondary">معلق</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                    <tr><td class="text-muted">المستخدم:</td><td>{{ $saleInvoice->user->name ?? '—' }}</td></tr>
-                                    @if($saleInvoice->notes)
-                                    <tr><td class="text-muted">ملاحظات:</td><td>{{ $saleInvoice->notes }}</td></tr>
-                                    @endif
-                                </table>
+                        </div>
+                    </div>
+
+                    <div class="users-detail-card">
+                        <div class="users-detail-card__header">
+                            <h6 class="users-detail-card__title"><i class="fas fa-calculator"></i> الإجماليات</h6>
+                        </div>
+                        <div class="users-detail-card__body">
+                            <div class="users-detail-list">
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-coins"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">المجموع الفرعي</span>
+                                        <div class="users-detail-item__value"><span class="users-amount">{{ number_format($saleInvoice->subtotal, 2) }}</span></div>
+                                    </div>
+                                </div>
+                                @if ($saleInvoice->discount_amount > 0)
+                                    <div class="users-detail-item">
+                                        <div class="users-detail-item__icon"><i class="fas fa-tag"></i></div>
+                                        <div class="users-detail-item__content">
+                                            <span class="users-detail-item__label">الخصم@if ($saleInvoice->coupon) (كوبون {{ $saleInvoice->coupon->code }})@endif</span>
+                                            <div class="users-detail-item__value"><span class="users-amount users-qty--out">- {{ number_format($saleInvoice->discount_amount, 2) }}</span></div>
+                                        </div>
+                                    </div>
+                                @endif
+                                @if ($saleInvoice->tax_amount > 0)
+                                    <div class="users-detail-item">
+                                        <div class="users-detail-item__icon"><i class="fas fa-percent"></i></div>
+                                        <div class="users-detail-item__content">
+                                            <span class="users-detail-item__label">الضريبة ({{ $saleInvoice->tax_rate }}%)</span>
+                                            <div class="users-detail-item__value"><span class="users-amount">{{ number_format($saleInvoice->tax_amount, 2) }}</span></div>
+                                        </div>
+                                    </div>
+                                @endif
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-money-bill-wave"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">الإجمالي</span>
+                                        <div class="users-detail-item__value"><span class="users-amount" style="font-size: 1rem;">{{ number_format($saleInvoice->total, 2) }}</span></div>
+                                    </div>
+                                </div>
+                                @if ($saleInvoice->status === \App\Models\SaleInvoice::STATUS_CONFIRMED)
+                                    <div class="users-detail-item">
+                                        <div class="users-detail-item__icon"><i class="fas fa-check-circle"></i></div>
+                                        <div class="users-detail-item__content">
+                                            <span class="users-detail-item__label">المدفوع</span>
+                                            <div class="users-detail-item__value"><span class="users-amount users-qty--in">{{ number_format($saleInvoice->total_paid, 2) }}</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="users-detail-item">
+                                        <div class="users-detail-item__icon"><i class="fas fa-hourglass-half"></i></div>
+                                        <div class="users-detail-item__content">
+                                            <span class="users-detail-item__label">المتبقي</span>
+                                            <div class="users-detail-item__value"><span class="users-amount">{{ number_format($saleInvoice->remaining_amount, 2) }}</span></div>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header">
-                        <h6 class="mb-0">بنود الفاتورة</h6>
+                <div class="users-table-card" style="margin-top: 1.25rem;">
+                    <div class="users-form-card__header" style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--users-border);">
+                        <h6 class="users-form-card__title" style="margin: 0;"><i class="fas fa-list"></i> بنود الفاتورة</h6>
                     </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-striped table-bordered mb-0">
-                                <thead class="table-light">
+                    <div class="table-responsive">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th>المنتج</th>
+                                    <th>الكمية</th>
+                                    <th>سعر الوحدة</th>
+                                    <th>الإجمالي</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($saleInvoice->items as $item)
                                     <tr>
-                                        <th>المنتج</th>
-                                        <th>الكمية</th>
-                                        <th>سعر الوحدة</th>
-                                        <th>الإجمالي</th>
+                                        <td>
+                                            <div class="users-user-cell">
+                                                <div class="users-avatar"><i class="fas fa-box"></i></div>
+                                                <span class="users-user-name" style="cursor: default;">{{ $item->product->name ?? '—' }}</span>
+                                            </div>
+                                        </td>
+                                        <td><span class="users-badge users-badge--role">{{ $item->quantity }}</span></td>
+                                        <td><span class="users-amount">{{ number_format($item->unit_price, 2) }}</span></td>
+                                        <td><span class="users-amount">{{ number_format($item->total, 2) }}</span></td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($saleInvoice->items as $item)
-                                        <tr>
-                                            <td>{{ $item->product->name ?? '—' }}</td>
-                                            <td>{{ $item->quantity }}</td>
-                                            <td>{{ number_format($item->unit_price, 2) }}</td>
-                                            <td>{{ number_format($item->total, 2) }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                @if($saleInvoice->status === \App\Models\SaleInvoice::STATUS_CONFIRMED && $paymentMethods->isNotEmpty())
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header">
-                        <h6 class="mb-0">تسجيل دفعة جديدة</h6>
-                    </div>
-                    <div class="card-body">
-                        <form action="{{ route('admin.sale-invoices.payments.store', $saleInvoice) }}" method="POST" class="row g-3">
-                            @csrf
-                            <div class="col-md-3">
-                                <label class="form-label">المبلغ <span class="text-danger">*</span></label>
-                                <input type="number" step="0.01" name="amount" class="form-control" value="{{ number_format($saleInvoice->remaining_amount, 2, '.', '') }}" max="{{ $saleInvoice->remaining_amount }}" required>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">طريقة الدفع <span class="text-danger">*</span></label>
-                                <select name="payment_method_id" class="form-select" required>
-                                    @foreach($paymentMethods as $pm)
-                                        <option value="{{ $pm->id }}">{{ $pm->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            @if(isset($treasuries) && $treasuries->isNotEmpty())
-                            <div class="col-md-3">
-                                <label class="form-label">خزنة / بنك</label>
-                                <select name="treasury_id" class="form-select">
-                                    <option value="">— اختياري —</option>
-                                    @foreach($treasuries as $t)
-                                        <option value="{{ $t->id }}">{{ $t->name }} ({{ $t->type === 'cashbox' ? 'خزنة' : 'بنك' }})</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            @endif
-                            <div class="col-md-3">
-                                <label class="form-label">تاريخ الدفع <span class="text-danger">*</span></label>
-                                <input type="date" name="payment_date" class="form-control" value="{{ date('Y-m-d') }}" required>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">مرجع (اختياري)</label>
-                                <input type="text" name="reference" class="form-control" placeholder="رقم شيك / تحويل">
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">ملاحظات</label>
-                                <input type="text" name="notes" class="form-control">
-                            </div>
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i> تسجيل الدفعة</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                @endif
-
-                @if($saleInvoice->status === \App\Models\SaleInvoice::STATUS_CONFIRMED && $saleInvoice->customer && (int) $saleInvoice->customer->loyalty_points > 0 && $saleInvoice->remaining_amount > 0)
-                <div class="card shadow-sm border-0 mb-4 border-primary">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0"><i class="fas fa-gift me-1"></i> استبدال نقاط الولاء</h6>
-                    </div>
-                    <div class="card-body">
-                        <p class="text-muted small mb-2">رصيد العميل: <strong>{{ $saleInvoice->customer->loyalty_points }}</strong> نقطة. المتبقي على الفاتورة: <strong>{{ number_format($saleInvoice->remaining_amount, 2) }}</strong></p>
-                        <form action="{{ route('admin.sale-invoices.redeem-points', $saleInvoice) }}" method="POST" class="row g-3 align-items-end">
-                            @csrf
-                            <div class="col-md-4">
-                                <label class="form-label">عدد النقاط المراد استبدالها <span class="text-danger">*</span></label>
-                                <input type="number" name="points" class="form-control" min="1" max="{{ $saleInvoice->customer->loyalty_points }}" value="1" required>
-                            </div>
-                            <div class="col-md-4">
-                                <button type="submit" class="btn btn-outline-primary btn-sm"><i class="fas fa-exchange-alt me-1"></i> استبدال النقاط</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                @endif
-            </div>
-
-            <div class="col-lg-4">
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header">
-                        <h6 class="mb-0">الإجماليات</h6>
-                    </div>
-                    <div class="card-body">
-                        <table class="table table-borderless mb-0">
-                            <tr><td>المجموع الفرعي:</td><td class="text-end">{{ number_format($saleInvoice->subtotal, 2) }}</td></tr>
-                            @if($saleInvoice->discount_amount > 0)
-                            <tr><td>الخصم@if($saleInvoice->coupon): (كوبون {{ $saleInvoice->coupon->code }})@endif:</td><td class="text-end">- {{ number_format($saleInvoice->discount_amount, 2) }}</td></tr>
-                            @endif
-                            @if($saleInvoice->tax_amount > 0)
-                            <tr><td>الضريبة ({{ $saleInvoice->tax_rate }}%):</td><td class="text-end">{{ number_format($saleInvoice->tax_amount, 2) }}</td></tr>
-                            @endif
-                            <tr><th>الإجمالي:</th><td class="text-end"><strong>{{ number_format($saleInvoice->total, 2) }}</strong></td></tr>
-                            @if($saleInvoice->status === \App\Models\SaleInvoice::STATUS_CONFIRMED)
-                            <tr><td>المدفوع:</td><td class="text-end text-success">{{ number_format($saleInvoice->total_paid, 2) }}</td></tr>
-                            <tr><td>المتبقي:</td><td class="text-end"><strong>{{ number_format($saleInvoice->remaining_amount, 2) }}</strong></td></tr>
-                            @endif
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="users-empty">لا توجد بنود</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
                         </table>
                     </div>
                 </div>
 
-                @if($saleInvoice->payments->isNotEmpty())
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header">
-                        <h6 class="mb-0">الدفعات</h6>
+                @if ($saleInvoice->status === \App\Models\SaleInvoice::STATUS_CONFIRMED && $paymentMethods->isNotEmpty())
+                    <div class="users-form-card" style="margin-top: 1.25rem;">
+                        <div class="users-form-card__header">
+                            <h6 class="users-form-card__title"><i class="fas fa-wallet"></i> تسجيل دفعة جديدة</h6>
+                        </div>
+                        <form action="{{ route('admin.sale-invoices.payments.store', $saleInvoice) }}" method="POST" class="users-form-card__body">
+                            @csrf
+                            <div class="users-form-grid">
+                                <div class="users-form-group">
+                                    <label class="users-form-label"><i class="fas fa-coins"></i> المبلغ <span class="users-form-required">*</span></label>
+                                    <input type="number" step="0.01" name="amount" class="users-form-input"
+                                        value="{{ number_format($saleInvoice->remaining_amount, 2, '.', '') }}" max="{{ $saleInvoice->remaining_amount }}" required>
+                                </div>
+                                <div class="users-form-group">
+                                    <label class="users-form-label"><i class="fas fa-credit-card"></i> طريقة الدفع <span class="users-form-required">*</span></label>
+                                    <select name="payment_method_id" class="users-form-select" required>
+                                        @foreach ($paymentMethods as $pm)
+                                            <option value="{{ $pm->id }}">{{ $pm->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                @if (isset($treasuries) && $treasuries->isNotEmpty())
+                                    <div class="users-form-group">
+                                        <label class="users-form-label"><i class="fas fa-university"></i> خزنة / بنك</label>
+                                        <select name="treasury_id" class="users-form-select">
+                                            <option value="">— اختياري —</option>
+                                            @foreach ($treasuries as $t)
+                                                <option value="{{ $t->id }}">{{ $t->name }} ({{ $t->type === 'cashbox' ? 'خزنة' : 'بنك' }})</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                @endif
+                                <div class="users-form-group">
+                                    <label class="users-form-label"><i class="fas fa-calendar"></i> تاريخ الدفع <span class="users-form-required">*</span></label>
+                                    <input type="date" name="payment_date" class="users-form-input" value="{{ date('Y-m-d') }}" required>
+                                </div>
+                                <div class="users-form-group">
+                                    <label class="users-form-label"><i class="fas fa-hashtag"></i> مرجع (اختياري)</label>
+                                    <input type="text" name="reference" class="users-form-input" placeholder="رقم شيك / تحويل">
+                                </div>
+                                <div class="users-form-group users-form-group--full">
+                                    <label class="users-form-label"><i class="fas fa-sticky-note"></i> ملاحظات</label>
+                                    <input type="text" name="notes" class="users-form-input">
+                                </div>
+                            </div>
+                            <div class="users-form-actions" style="margin-top: 1rem; padding-top: 0;">
+                                <button type="submit" class="users-btn-submit"><i class="fas fa-plus"></i> تسجيل الدفعة</button>
+                            </div>
+                        </form>
                     </div>
-                    <div class="card-body p-0">
+                @endif
+
+                @if ($saleInvoice->status === \App\Models\SaleInvoice::STATUS_CONFIRMED && $saleInvoice->customer && (int) $saleInvoice->customer->loyalty_points > 0 && $saleInvoice->remaining_amount > 0)
+                    <div class="users-form-card" style="margin-top: 1.25rem; border-color: var(--users-primary);">
+                        <div class="users-form-card__header">
+                            <h6 class="users-form-card__title"><i class="fas fa-gift"></i> استبدال نقاط الولاء</h6>
+                        </div>
+                        <div class="users-form-card__body">
+                            <p class="users-muted-text" style="margin-bottom: 1rem;">
+                                رصيد العميل: <strong>{{ $saleInvoice->customer->loyalty_points }}</strong> نقطة —
+                                المتبقي على الفاتورة: <strong>{{ number_format($saleInvoice->remaining_amount, 2) }}</strong>
+                            </p>
+                            <form action="{{ route('admin.sale-invoices.redeem-points', $saleInvoice) }}" method="POST" class="users-form-grid" style="align-items: end;">
+                                @csrf
+                                <div class="users-form-group">
+                                    <label class="users-form-label">عدد النقاط <span class="users-form-required">*</span></label>
+                                    <input type="number" name="points" class="users-form-input" min="1" max="{{ $saleInvoice->customer->loyalty_points }}" value="1" required>
+                                </div>
+                                <div class="users-form-group">
+                                    <button type="submit" class="users-btn-secondary"><i class="fas fa-exchange-alt"></i> استبدال النقاط</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                @endif
+
+                @if ($saleInvoice->payments->isNotEmpty())
+                    <div class="users-table-card" style="margin-top: 1.25rem;">
+                        <div class="users-form-card__header" style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--users-border);">
+                            <h6 class="users-form-card__title" style="margin: 0;"><i class="fas fa-receipt"></i> الدفعات</h6>
+                        </div>
                         <div class="table-responsive">
-                            <table class="table table-sm table-bordered mb-0">
-                                <thead class="table-light">
+                            <table class="users-table">
+                                <thead>
                                     <tr>
                                         <th>التاريخ</th>
                                         <th>الطريقة</th>
@@ -245,17 +332,18 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($saleInvoice->payments as $pay)
+                                    @foreach ($saleInvoice->payments as $pay)
                                         <tr>
                                             <td>{{ $pay->payment_date->format('Y-m-d') }}</td>
                                             <td>{{ $pay->paymentMethod->name ?? '—' }}</td>
                                             <td>{{ $pay->treasury->name ?? '—' }}</td>
-                                            <td>{{ number_format($pay->amount, 2) }}</td>
+                                            <td><span class="users-amount users-qty--in">{{ number_format($pay->amount, 2) }}</span></td>
                                             <td>
-                                                <form action="{{ route('admin.sale-invoices.payments.destroy', [$saleInvoice, $pay]) }}" method="POST" class="d-inline" onsubmit="return confirm('حذف هذه الدفعة؟');">
+                                                <form action="{{ route('admin.sale-invoices.payments.destroy', [$saleInvoice, $pay]) }}" method="POST" class="d-inline"
+                                                    onsubmit="return confirm('حذف هذه الدفعة؟');">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                                    <button type="submit" class="users-action-btn users-action-btn--delete" title="حذف"><i class="fas fa-trash"></i></button>
                                                 </form>
                                             </td>
                                         </tr>
@@ -264,10 +352,13 @@
                             </table>
                         </div>
                     </div>
-                </div>
                 @endif
+
             </div>
         </div>
     </div>
-</div>
+@stop
+
+@section('script')
+    @include('admin.components.premium.scripts')
 @stop

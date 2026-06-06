@@ -1,111 +1,87 @@
 @extends('admin.layouts.master')
 
 @section('page-title')
-   الأدوار
+    الأدوار
 @stop
 
 @section('css')
+    @include('admin.components.premium.styles')
 @stop
 
 @section('content')
-
-
-    <!-- Start::app-content -->
     <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
 
-        <div class="container-fluid">
+                @include('admin.components.premium.flash')
 
-            <!-- Page Header -->
-            <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
-                {{-- <div class="my-auto">
-                    <h5 class="page-title fs-21 mb-1">الأدوار</h5>
-                </div> --}}
-            </div>
-            <!-- Page Header Close -->
+                <div class="users-header">
+                    <h5 class="users-page-title">جدول الأدوار</h5>
+                    <a href="{{ route('roles.create') }}" class="users-btn-create">
+                        <i class="fas fa-plus"></i>
+                        إضافة دور جديد
+                    </a>
+                </div>
 
-      @if (\Session::has('success'))
-        <div class="alert alert-success">
-            <ul>
-                <li>{!! \Session::get('success') !!}</li>
-            </ul>
-        </div>
-    @endif
-
-    @if (\Session::has('error'))
-        <div class="alert alert-danger">
-            <ul>
-                <li>{!! \Session::get('error') !!}</li>
-            </ul>
-        </div>
-    @endif
-
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            <ul>
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-            <div class="row">
-                <div class="col-xl-12">
-                    <div class="card shadow-sm border-0">
-
-                        <div class="card-header d-flex justify-content-between align-items-center bg-light">
-                            <h5 class="mb-0 fw-bold">جدول الأدوار</h5>
-                            <a class="btn btn-sm btn-primary" href="{{ route('roles.create') }}">
-                                <i class="fas fa-plus me-1"></i> إضافة دور جديد
-                            </a>
-                        </div>
-
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-striped align-middle table-hover table-bordered mb-0 text-center">
-                                    <thead class="table-dark">
-                                        <tr>
-                                            <th>#</th>
-                                            <th>اسم الصلاحية</th>
-                                            <th>العمليات</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse ($roles as $role)
-                                            <tr>
-                                                <td>{{ $loop->iteration }}</td>
-                                                <td>{{ $role->name }}</td>
-                                                <td>
-                                                    <a href="{{route("roles.edit" , $role->id)}}" class="btn btn-sm btn-info text-white">
-                                                        <i class="fas fa-edit"></i> تعديل
+                <div class="users-table-card">
+                    <div class="table-responsive">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 60px;">#</th>
+                                    <th style="min-width: 220px;">اسم الدور</th>
+                                    <th style="min-width: 140px;">العمليات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($roles as $role)
+                                    <tr>
+                                        <th scope="row" class="users-row-index">{{ $loop->iteration }}</th>
+                                        <td>
+                                            <div class="users-user-cell">
+                                                <div class="users-avatar">
+                                                    <i class="fas fa-user-shield"></i>
+                                                </div>
+                                                <span class="users-badge users-badge--role">{{ $role->name }}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="users-actions">
+                                                <a class="users-action-btn users-action-btn--edit"
+                                                    href="{{ route('roles.edit', $role->id) }}"
+                                                    title="تعديل الدور">
+                                                    <i class="fa-solid fa-pen-to-square"></i>
                                                 </a>
-                                                    <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
-                                                        data-bs-target="#delete{{ $role->id }}">
-                                                        <i class="fas fa-trash-alt"></i> حذف
-                                                    </button>
-                                                </td>
-                                            </tr>
-
-                                            @include('admin.pages.roles.delete');
-                                        @empty
-                                            <tr>
-                                                <td colspan="3" class="text-danger fw-bold text-center">
-                                                    لا توجد بيانات متاحة
-                                                </td>
-                                            </tr>
-
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-
-
-                        </div>
+                                                <button type="button" class="users-action-btn users-action-btn--delete"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteConfirmModal"
+                                                    data-delete-action="{{ route('roles.destroy', $role->id) }}"
+                                                    data-delete-title="حذف الدور"
+                                                    data-delete-message="هل أنت متأكد من حذف هذا الدور؟"
+                                                    data-delete-item="{{ $role->name }}"
+                                                    title="حذف الدور">
+                                                    <i class="fa-solid fa-trash-can"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="users-empty">لا توجد بيانات متاحة</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-            </div>
-            <!--End::row-1 -->
 
+            </div>
         </div>
     </div>
-    <!-- End::app-content -->
+
+    @include('admin.components.delete-confirm-modal')
+@stop
+
+@section('script')
+    @include('admin.components.premium.scripts')
 @stop

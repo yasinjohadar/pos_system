@@ -4,245 +4,232 @@
     تعديل المنتج
 @stop
 
+@section('css')
+    @include('admin.components.premium.styles')
+@stop
+
 @section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
-            <div class="my-auto">
-                <h5 class="page-title fs-21 mb-1">تعديل المنتج: {{ $product->name }}</h5>
-            </div>
-            <div>
-                <a href="{{ route('admin.products.index') }}" class="btn btn-secondary btn-sm">رجوع</a>
-            </div>
-        </div>
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
 
-        <div class="row">
-            <div class="col-lg-8">
-                @if(session('success'))
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <div class="users-header">
+                    <h5 class="users-page-title">تعديل المنتج: {{ $product->name }}</h5>
+                    <div class="users-header-actions">
+                        <a href="{{ route('admin.products.index') }}" class="users-btn-secondary">
+                            <i class="fas fa-arrow-right"></i>
+                            رجوع
+                        </a>
                     </div>
-                @endif
-                @if(session('error'))
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                @endif
-                @if($errors->any())
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+                </div>
+
+                @include('admin.components.premium.flash')
+
+                @if ($errors->any())
+                    <div class="alert alert-danger alert-dismissible fade show">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>يرجى تصحيح الأخطاء التالية:</strong>
+                        <ul class="mb-0 mt-2">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 @endif
 
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-body">
-                        <form action="{{ route('admin.products.update', $product) }}" method="POST" enctype="multipart/form-data">
-                            @csrf
-                            @method('PUT')
-                            <div class="mb-3">
-                                <label for="name" class="form-label">اسم المنتج <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="name" name="name" value="{{ old('name', $product->name) }}" required>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="category_id" class="form-label">التصنيف</label>
-                                    <select class="form-select" id="category_id" name="category_id">
-                                        <option value="">— اختر —</option>
-                                        @foreach($categories as $c)
-                                            <option value="{{ $c->id }}" {{ old('category_id', $product->category_id) == $c->id ? 'selected' : '' }}>{{ $c->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="unit_id" class="form-label">الوحدة</label>
-                                    <select class="form-select" id="unit_id" name="unit_id">
-                                        <option value="">— اختر —</option>
-                                        @foreach($units as $u)
-                                            <option value="{{ $u->id }}" {{ old('unit_id', $product->unit_id) == $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label for="barcode" class="form-label">الباركود</label>
-                                <input type="text" class="form-control" id="barcode" name="barcode" value="{{ old('barcode', $product->barcode) }}">
-                            </div>
-                            <div class="mb-3">
-                                <label for="description" class="form-label">الوصف</label>
-                                <textarea class="form-control" id="description" name="description" rows="2">{{ old('description', $product->description) }}</textarea>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="base_price" class="form-label">السعر الأساسي <span class="text-danger">*</span></label>
-                                    <input type="number" step="0.01" min="0" class="form-control" id="base_price" name="base_price" value="{{ old('base_price', $product->base_price) }}" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="cost_price" class="form-label">سعر التكلفة</label>
-                                    <input type="number" step="0.01" min="0" class="form-control" id="cost_price" name="cost_price" value="{{ old('cost_price', $product->cost_price) }}">
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="min_stock_alert" class="form-label">حد تنبيه المخزون</label>
-                                    <input type="number" min="0" class="form-control" id="min_stock_alert" name="min_stock_alert" value="{{ old('min_stock_alert', $product->min_stock_alert) }}">
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label for="reorder_level" class="form-label">حد إعادة الطلب</label>
-                                    <input type="number" step="0.01" min="0" class="form-control" id="reorder_level" name="reorder_level" value="{{ old('reorder_level', $product->reorder_level) }}">
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label for="max_level" class="form-label">الحد الأقصى للمخزون</label>
-                                    <input type="number" step="0.01" min="0" class="form-control" id="max_level" name="max_level" value="{{ old('max_level', $product->max_level) }}">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="image" class="form-label">الصورة</label>
-                                    <input type="file" class="form-control" id="image" name="image" accept="image/*">
-                                    @if($product->image)
-                                        <small class="text-muted">الحالية: {{ basename($product->image) }}</small>
-                                    @endif
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" {{ old('is_active', $product->is_active) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="is_active">منتج نشط</label>
-                                </div>
-                            </div>
+                <div class="users-form-layout">
+                    @include('admin.components.premium.form-aside', [
+                        'icon' => 'fa-pen-to-square',
+                        'title' => 'تعديل بيانات المنتج',
+                        'text' => 'حدّث بيانات المنتج والأسعار والباركودات الإضافية من مكان واحد.',
+                        'tips' => [
+                            'الأسعار الإضافية تُحدَّد حسب الفرع ونوع السعر',
+                            'يمكن إضافة باركودات متعددة للبحث السريع',
+                            'إيقاف التفعيل يخفي المنتج من نقطة البيع',
+                        ],
+                    ])
 
-                            <h6 class="mb-2">أسعار إضافية (حسب الفرع ونوع السعر)</h6>
-                            <div class="table-responsive mb-3">
-                                <table class="table table-bordered" id="prices-table">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>الفرع</th>
-                                            <th>نوع السعر</th>
-                                            <th>القيمة</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @php
-                                            $pricesData = old('prices', $product->prices->count() ? $product->prices : [['branch_id' => null, 'price_type' => 'retail', 'value' => '']]);
-                                        @endphp
-                                        @foreach($pricesData as $i => $priceRow)
-                                            @php
-                                                $branchId = is_object($priceRow) ? $priceRow->branch_id : ($priceRow['branch_id'] ?? '');
-                                                $priceType = is_object($priceRow) ? $priceRow->price_type : ($priceRow['price_type'] ?? 'retail');
-                                                $value = is_object($priceRow) ? $priceRow->value : ($priceRow['value'] ?? '');
-                                            @endphp
+                    <div>
+                        <div class="users-form-card">
+                            <div class="users-form-card__header">
+                                <h6 class="users-form-card__title">
+                                    <i class="fas fa-box"></i>
+                                    بيانات المنتج
+                                </h6>
+                            </div>
+                            <form action="{{ route('admin.products.update', $product) }}" method="POST" enctype="multipart/form-data" class="users-form-card__body">
+                                @csrf
+                                @method('PUT')
+
+                                @include('admin.pages.products.partials.form-fields', [
+                                    'categories' => $categories,
+                                    'units' => $units,
+                                    'taxes' => $taxes,
+                                    'product' => $product,
+                                ])
+
+                                <h6 class="users-form-label" style="margin: 1rem 0 0.75rem;">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    أسعار إضافية (حسب الفرع ونوع السعر)
+                                </h6>
+                                <div class="table-responsive mb-3">
+                                    <table class="users-table" id="prices-table">
+                                        <thead>
                                             <tr>
+                                                <th>الفرع</th>
+                                                <th>نوع السعر</th>
+                                                <th>القيمة</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @php
+                                                $pricesData = old('prices', $product->prices->count() ? $product->prices : [['branch_id' => null, 'price_type' => 'retail', 'value' => '']]);
+                                            @endphp
+                                            @foreach ($pricesData as $i => $priceRow)
+                                                @php
+                                                    $branchId = is_object($priceRow) ? $priceRow->branch_id : ($priceRow['branch_id'] ?? '');
+                                                    $priceType = is_object($priceRow) ? $priceRow->price_type : ($priceRow['price_type'] ?? 'retail');
+                                                    $value = is_object($priceRow) ? $priceRow->value : ($priceRow['value'] ?? '');
+                                                @endphp
+                                                <tr>
+                                                    <td>
+                                                        <select class="users-form-select" name="prices[{{ $i }}][branch_id]">
+                                                            <option value="">افتراضي (جميع الفروع)</option>
+                                                            @foreach ($branches as $b)
+                                                                <option value="{{ $b->id }}" {{ $branchId == $b->id ? 'selected' : '' }}>{{ $b->name }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </td>
+                                                    <td>
+                                                        <select class="users-form-select" name="prices[{{ $i }}][price_type]">
+                                                            @foreach (\App\Models\ProductPrice::PRICE_TYPES as $k => $v)
+                                                                <option value="{{ $k }}" {{ $priceType == $k ? 'selected' : '' }}>{{ $v }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </td>
+                                                    <td>
+                                                        <input type="number" step="0.01" min="0" class="users-form-input" name="prices[{{ $i }}][value]" value="{{ $value }}" placeholder="0.00">
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                            <tr id="price-row-template" style="display:none;">
                                                 <td>
-                                                    <select class="form-select form-select-sm" name="prices[{{ $i }}][branch_id]">
-                                                        <option value="">افتراضي (جميع الفروع)</option>
-                                                        @foreach($branches as $b)
-                                                            <option value="{{ $b->id }}" {{ $branchId == $b->id ? 'selected' : '' }}>{{ $b->name }}</option>
+                                                    <select class="users-form-select" name="prices[__INDEX__][branch_id]">
+                                                        <option value="">افتراضي</option>
+                                                        @foreach ($branches as $b)
+                                                            <option value="{{ $b->id }}">{{ $b->name }}</option>
                                                         @endforeach
                                                     </select>
                                                 </td>
                                                 <td>
-                                                    <select class="form-select form-select-sm" name="prices[{{ $i }}][price_type]">
-                                                        @foreach(\App\Models\ProductPrice::PRICE_TYPES as $k => $v)
-                                                            <option value="{{ $k }}" {{ $priceType == $k ? 'selected' : '' }}>{{ $v }}</option>
+                                                    <select class="users-form-select" name="prices[__INDEX__][price_type]">
+                                                        @foreach (\App\Models\ProductPrice::PRICE_TYPES as $k => $v)
+                                                            <option value="{{ $k }}">{{ $v }}</option>
                                                         @endforeach
                                                     </select>
                                                 </td>
                                                 <td>
-                                                    <input type="number" step="0.01" min="0" class="form-control form-control-sm" name="prices[{{ $i }}][value]" value="{{ $value }}" placeholder="0.00">
+                                                    <input type="number" step="0.01" min="0" class="users-form-input" name="prices[__INDEX__][value]" placeholder="0.00">
                                                 </td>
                                             </tr>
-                                        @endforeach
-                                        <tr id="price-row-template" style="display:none;">
-                                            <td>
-                                                <select class="form-select form-select-sm" name="prices[__INDEX__][branch_id]">
-                                                    <option value="">افتراضي</option>
-                                                    @foreach($branches as $b)
-                                                        <option value="{{ $b->id }}">{{ $b->name }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <select class="form-select form-select-sm" name="prices[__INDEX__][price_type]">
-                                                    @foreach(\App\Models\ProductPrice::PRICE_TYPES as $k => $v)
-                                                        <option value="{{ $k }}">{{ $v }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </td>
-                                            <td>
-                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm" name="prices[__INDEX__][value]" placeholder="0.00">
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="add-price-row">
-                                <i class="fas fa-plus me-1"></i> إضافة سعر
-                            </button>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <button type="button" class="users-btn-secondary mb-3" id="add-price-row" style="padding: 0.375rem 0.875rem; font-size: 0.8125rem;">
+                                    <i class="fas fa-plus"></i>
+                                    إضافة سعر
+                                </button>
 
-                            <h6 class="mb-2 mt-4">باركودات إضافية</h6>
-                            <p class="text-muted small">الباركود الرئيسي أعلاه. يمكنك إضافة رموز إضافية (مثلاً لعبوات مختلفة) للبحث السريع.</p>
-                            <div class="table-responsive mb-2">
-                                <table class="table table-bordered table-sm">
-                                    <thead class="table-light">
-                                        <tr><th>الباركود</th><th>وصف</th><th width="80">إجراء</th></tr>
+                                <div class="users-form-actions">
+                                    <button type="submit" class="users-btn-submit">
+                                        <i class="fas fa-save"></i>
+                                        حفظ التعديلات
+                                    </button>
+                                    <a href="{{ route('admin.products.index') }}" class="users-btn-secondary">إلغاء</a>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="users-table-card mt-3">
+                            <div class="users-detail-card__header">
+                                <h6 class="users-detail-card__title">
+                                    <i class="fas fa-barcode"></i>
+                                    باركودات إضافية
+                                </h6>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="users-table">
+                                    <thead>
+                                        <tr>
+                                            <th>الباركود</th>
+                                            <th>وصف</th>
+                                            <th>الإجراءات</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse($product->barcodes as $pb)
+                                        @forelse ($product->barcodes as $pb)
                                             <tr>
-                                                <td>{{ $pb->barcode }}</td>
+                                                <td dir="ltr">{{ $pb->barcode }}</td>
                                                 <td>{{ $pb->description ?? '—' }}</td>
                                                 <td>
-                                                    <form action="{{ route('admin.product-barcodes.destroy', $pb) }}" method="POST" class="d-inline" onsubmit="return confirm('حذف هذا الباركود؟');">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
-                                                    </form>
+                                                    <button type="button" class="users-action-btn users-action-btn--delete"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#deleteConfirmModal"
+                                                        data-delete-action="{{ route('admin.product-barcodes.destroy', $pb) }}"
+                                                        data-delete-title="حذف الباركود"
+                                                        data-delete-message="هل أنت متأكد من حذف هذا الباركود؟"
+                                                        data-delete-item="{{ $pb->barcode }}"
+                                                        title="حذف الباركود">
+                                                        <i class="fa-solid fa-trash-can"></i>
+                                                    </button>
                                                 </td>
                                             </tr>
                                         @empty
-                                            <tr><td colspan="3" class="text-center text-muted">لا توجد باركودات إضافية.</td></tr>
+                                            <tr>
+                                                <td colspan="3" class="users-empty">لا توجد باركودات إضافية</td>
+                                            </tr>
                                         @endforelse
                                     </tbody>
                                 </table>
                             </div>
-                            <form action="{{ route('admin.products.barcodes.store', $product) }}" method="POST" class="row g-2 align-items-end mb-4">
-                                @csrf
-                                <div class="col-auto">
-                                    <label class="form-label small mb-0">باركود جديد</label>
-                                    <input type="text" name="barcode" class="form-control form-control-sm" placeholder="رقم الباركود" required maxlength="100">
-                                </div>
-                                <div class="col-auto">
-                                    <label class="form-label small mb-0">وصف (اختياري)</label>
-                                    <input type="text" name="description" class="form-control form-control-sm" placeholder="مثلاً: علبة 12" maxlength="255">
-                                </div>
-                                <div class="col-auto">
-                                    <button type="submit" class="btn btn-sm btn-outline-primary"><i class="fas fa-plus me-1"></i> إضافة</button>
-                                </div>
-                            </form>
-
-                            <div class="d-flex gap-2">
-                                <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> حفظ</button>
-                                <a href="{{ route('admin.products.index') }}" class="btn btn-secondary">إلغاء</a>
+                            <div class="users-form-card__body" style="border-top: 1px solid var(--users-border);">
+                                <form action="{{ route('admin.products.barcodes.store', $product) }}" method="POST" class="users-filters-form">
+                                    @csrf
+                                    <input type="text" name="barcode" class="users-search-input" placeholder="باركود جديد" required maxlength="100" dir="ltr">
+                                    <input type="text" name="description" class="users-search-input" placeholder="وصف (اختياري)" maxlength="255">
+                                    <button type="submit" class="users-btn-filter users-btn-filter--search">
+                                        <i class="fas fa-plus"></i>
+                                        إضافة
+                                    </button>
+                                </form>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
-</div>
 
-@push('scripts')
-<script>
-document.getElementById('add-price-row')?.addEventListener('click', function () {
-    var tbody = document.querySelector('#prices-table tbody');
-    var template = document.getElementById('price-row-template');
-    if (!tbody || !template) return;
-    var index = tbody.querySelectorAll('tr:not(#price-row-template)').length;
-    var html = template.outerHTML.replace(/__INDEX__/g, index).replace('style="display:none;"', '').replace('id="price-row-template"', '');
-    template.insertAdjacentHTML('beforebegin', html);
-});
-</script>
-@endpush
+    @include('admin.components.delete-confirm-modal')
+@stop
+
+@section('script')
+    @include('admin.components.premium.scripts')
+    <script>
+        AdminPremium.initFormToggles();
+
+        document.getElementById('add-price-row')?.addEventListener('click', function () {
+            var tbody = document.querySelector('#prices-table tbody');
+            var template = document.getElementById('price-row-template');
+            if (!tbody || !template) return;
+            var index = tbody.querySelectorAll('tr:not(#price-row-template)').length;
+            var html = template.outerHTML
+                .replace(/__INDEX__/g, index)
+                .replace('style="display:none;"', '')
+                .replace('id="price-row-template"', '');
+            template.insertAdjacentHTML('beforebegin', html);
+        });
+    </script>
 @stop

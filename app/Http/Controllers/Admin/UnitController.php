@@ -13,30 +13,44 @@ class UnitController extends Controller
         $this->middleware('auth');
         $this->middleware('permission:unit-list')->only('index');
         $this->middleware('permission:unit-create')->only(['create', 'store']);
-        $this->middleware('permission:unit-edit')->only(['edit', 'update']);
+        $this->middleware('permission:unit-edit')->only(['edit', 'update', 'toggleStatus']);
         $this->middleware('permission:unit-delete')->only('destroy');
         $this->middleware('permission:unit-show')->only('show');
     }
 
     public function index(Request $request)
     {
+        $units = $this->buildUnitsQuery($request)
+            ->paginate(15)
+            ->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.units.partials.table-rows', compact('units'))->render(),
+                'pagination' => view('admin.pages.units.partials.pagination', compact('units'))->render(),
+            ]);
+        }
+
+        return view('admin.pages.units.index', compact('units'));
+    }
+
+    private function buildUnitsQuery(Request $request)
+    {
         $query = Unit::with('baseUnit')->withCount('products')->orderBy('name');
 
         if ($request->filled('query')) {
             $search = $request->input('query');
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%$search%")
-                    ->orWhere('symbol', 'like', "%$search%");
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('symbol', 'like', "%{$search}%");
             });
         }
 
         if ($request->filled('is_active')) {
-            $query->where('is_active', $request->boolean('is_active'));
+            $query->where('is_active', (int) $request->input('is_active'));
         }
 
-        $units = $query->paginate(15);
-
-        return view('admin.pages.units.index', compact('units'));
+        return $query;
     }
 
     public function create()
@@ -93,6 +107,32 @@ class UnitController extends Controller
 
         return redirect()->route('admin.units.index')
             ->with('success', 'تم تحديث الوحدة بنجاح');
+    }
+
+    public function toggleStatus(Request $request, Unit $unit)
+    {
+        try {
+            $unit->update(['is_active' => ! $unit->is_active]);
+            $unit->refresh();
+
+            $status = $unit->is_active ? 'نشط' : 'غير نشط';
+
+            return response()->json([
+                'success' => true,
+                'message' => "تم تحديث حالة الوحدة إلى: {$status}",
+                'is_active' => (bool) $unit->is_active,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error toggling unit status', [
+                'unit_id' => $unit->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء تحديث حالة الوحدة',
+            ], 500);
+        }
     }
 
     public function destroy(Unit $unit)

@@ -14,7 +14,7 @@ class SaleReturnController extends Controller
     {
         $this->middleware('auth');
         $this->middleware('permission:sale-return-list')->only('index');
-        $this->middleware('permission:sale-return-create')->only(['create', 'store']);
+        $this->middleware('permission:sale-return-create')->only(['create', 'store', 'searchInvoices', 'invoiceReturnData']);
         $this->middleware('permission:sale-return-show')->only('show');
         $this->middleware('permission:sale-return-complete')->only('complete');
     }
@@ -37,6 +37,13 @@ class SaleReturnController extends Controller
 
         $returns = $query->paginate(15)->withQueryString();
 
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.sales.returns.partials.table-rows', compact('returns'))->render(),
+                'pagination' => view('admin.pages.sales.returns.partials.pagination', compact('returns'))->render(),
+            ]);
+        }
+
         return view('admin.pages.sales.returns.index', compact('returns'));
     }
 
@@ -52,15 +59,68 @@ class SaleReturnController extends Controller
                 ->findOrFail($request->input('sale_invoice_id'));
         }
 
-        $invoices = SaleInvoice::where('status', SaleInvoice::STATUS_CONFIRMED)
-            ->with('branch')
-            ->orderByDesc('id')
-            ->limit(200)
-            ->get();
-
         $warehouses = \App\Models\Warehouse::where('is_active', true)->with('branch')->orderBy('name')->get();
 
-        return view('admin.pages.sales.returns.create', compact('saleInvoice', 'invoices', 'warehouses'));
+        return view('admin.pages.sales.returns.create', compact('saleInvoice', 'warehouses'));
+    }
+
+    /**
+     * بحث الفواتير المؤكدة لنموذج المرتجع (Select2 AJAX).
+     */
+    public function searchInvoices(Request $request)
+    {
+        $search = trim((string) $request->input('search', $request->input('q', '')));
+
+        $query = SaleInvoice::query()
+            ->where('status', SaleInvoice::STATUS_CONFIRMED)
+            ->with(['branch', 'customer'])
+            ->orderByDesc('invoice_date')
+            ->orderByDesc('id');
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('number', 'like', "%{$search}%");
+                if (is_numeric($search)) {
+                    $q->orWhere('id', $search);
+                }
+            });
+        }
+
+        $invoices = $query->limit(25)->get();
+
+        return response()->json([
+            'results' => $invoices->map(fn ($inv) => [
+                'id' => $inv->id,
+                'text' => $inv->number
+                    . ' — ' . ($inv->branch->name ?? '—')
+                    . ' — ' . $inv->invoice_date->format('Y-m-d')
+                    . ($inv->customer ? ' (' . $inv->customer->name . ')' : ''),
+            ])->values(),
+        ]);
+    }
+
+    /**
+     * بيانات الفاتورة لملء بنود المرتجع (AJAX).
+     */
+    public function invoiceReturnData(SaleInvoice $saleInvoice)
+    {
+        if ($saleInvoice->status !== SaleInvoice::STATUS_CONFIRMED) {
+            return response()->json(['message' => 'الفاتورة غير مؤكدة.'], 422);
+        }
+
+        $saleInvoice->load(['items.product']);
+
+        return response()->json([
+            'warehouse_id' => $saleInvoice->warehouse_id,
+            'invoice_number' => $saleInvoice->number,
+            'items' => $saleInvoice->items->map(fn ($item) => [
+                'sale_invoice_item_id' => $item->id,
+                'product_id' => $item->product_id,
+                'product_name' => $item->product->name ?? '—',
+                'quantity_remaining' => (float) $item->quantity_remaining,
+                'unit_price' => (float) $item->unit_price,
+            ])->values(),
+        ]);
     }
 
     public function store(Request $request)
@@ -96,8 +156,13 @@ class SaleReturnController extends Controller
                 'notes' => $validated['notes'] ?? null,
             ]);
 
+            $items = array_values(array_filter($validated['items'], fn ($row) => (float) $row['quantity'] > 0));
+            if ($items === []) {
+                return back()->withInput()->withErrors(['items' => 'أدخل كمية مرتجعة واحدة على الأقل.']);
+            }
+
             $subtotal = 0;
-            foreach ($validated['items'] as $row) {
+            foreach ($items as $row) {
                 $total = round((float) $row['quantity'] * (float) $row['unit_price'], 2);
                 $return->items()->create([
                     'sale_invoice_item_id' => $row['sale_invoice_item_id'] ?? null,

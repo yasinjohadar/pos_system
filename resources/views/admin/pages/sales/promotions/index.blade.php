@@ -1,95 +1,93 @@
 @extends('admin.layouts.master')
 
 @section('page-title')
-العروض والخصومات
+    العروض والخصومات
+@stop
+
+@section('css')
+    @include('admin.components.premium.styles')
 @stop
 
 @section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center my-4">
-            <h4 class="mb-0">العروض والخصومات</h4>
-            @can('promotion-create')
-                <a href="{{ route('admin.promotions.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> إضافة عرض جديد
-                </a>
-            @endcan
-        </div>
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
 
-        <div class="card">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-bordered mb-0">
-                        <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>الاسم</th>
-                            <th>النوع</th>
-                            <th>القيمة</th>
-                            <th>الفترة</th>
-                            <th>الحد الأدنى للكمية</th>
-                            <th>الحالة</th>
-                            <th>عدد المنتجات</th>
-                            <th>التحكم</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @forelse($promotions as $promotion)
-                            <tr>
-                                <td>{{ $promotion->id }}</td>
-                                <td>{{ $promotion->name }}</td>
-                                <td>{{ $promotion->type === 'percent' ? 'نسبة مئوية' : 'مبلغ ثابت' }}</td>
-                                <td>{{ number_format($promotion->value, 2) }}</td>
-                                <td>
-                                    @if($promotion->start_date || $promotion->end_date)
-                                        {{ $promotion->start_date ? $promotion->start_date->format('Y-m-d') : 'بدون بداية' }}
-                                        -
-                                        {{ $promotion->end_date ? $promotion->end_date->format('Y-m-d') : 'بدون نهاية' }}
-                                    @else
-                                        مستمر
-                                    @endif
-                                </td>
-                                <td>
-                                    {{ $promotion->min_qty !== null ? number_format($promotion->min_qty, 2) : '-' }}
-                                </td>
-                                <td>
-                                    <span class="badge {{ $promotion->is_active ? 'bg-success' : 'bg-secondary' }}">
-                                        {{ $promotion->is_active ? 'نشط' : 'متوقف' }}
-                                    </span>
-                                </td>
-                                <td>{{ $promotion->items_count }}</td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        @can('promotion-edit')
-                                            <a href="{{ route('admin.promotions.edit', $promotion) }}"
-                                               class="btn btn-sm btn-warning">تعديل</a>
-                                        @endcan
-                                        @can('promotion-delete')
-                                            <form action="{{ route('admin.promotions.destroy', $promotion) }}" method="POST"
-                                                  onsubmit="return confirm('هل أنت متأكد من حذف هذا العرض؟');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger">حذف</button>
-                                            </form>
-                                        @endcan
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="9" class="text-center">لا توجد عروض حالياً.</td>
-                            </tr>
-                        @endforelse
-                        </tbody>
-                    </table>
+                @include('admin.components.premium.flash')
+
+                <div class="users-header">
+                    <h5 class="users-page-title">العروض والخصومات</h5>
+                    @can('promotion-create')
+                        <a href="{{ route('admin.promotions.create') }}" class="users-btn-create">
+                            <i class="fas fa-plus"></i>
+                            إضافة عرض جديد
+                        </a>
+                    @endcan
                 </div>
 
-                <div class="mt-3">
-                    {{ $promotions->links() }}
+                <div class="users-filters-card">
+                    <form id="promotions-filters" action="{{ route('admin.promotions.index') }}" method="GET" class="users-filters-form">
+                        <input type="text" name="query" class="users-search-input"
+                            placeholder="بحث بالاسم" value="{{ request('query') }}" autocomplete="off">
+
+                        <select name="is_active" class="users-select">
+                            <option value="">جميع الحالات</option>
+                            <option value="1" {{ request('is_active') === '1' ? 'selected' : '' }}>نشط</option>
+                            <option value="0" {{ request('is_active') === '0' ? 'selected' : '' }}>متوقف</option>
+                        </select>
+
+                        <button type="submit" class="users-btn-filter users-btn-filter--search">
+                            <i class="fas fa-search me-1"></i> بحث
+                        </button>
+                        <button type="button" id="promotions-clear" class="users-btn-filter users-btn-filter--clear">
+                            <i class="fas fa-times me-1"></i> مسح
+                        </button>
+                    </form>
                 </div>
+
+                <div class="users-table-card" id="promotions-card">
+                    <div class="table-responsive">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">#</th>
+                                    <th style="min-width: 160px;">الاسم</th>
+                                    <th>النوع</th>
+                                    <th>القيمة</th>
+                                    <th>الفترة</th>
+                                    <th>الحد الأدنى للكمية</th>
+                                    <th>الحالة</th>
+                                    <th>عدد المنتجات</th>
+                                    <th style="min-width: 130px;">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="promotions-body">
+                                @include('admin.pages.sales.promotions.partials.table-rows')
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="users-pagination" id="promotions-pagination">
+                        @include('admin.pages.sales.promotions.partials.pagination')
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
-</div>
+
+    @include('admin.components.delete-confirm-modal')
 @stop
 
+@section('script')
+    @include('admin.components.premium.scripts')
+    <script>
+        AdminPremium.initIndex({
+            filtersFormId: 'promotions-filters',
+            tableBodyId: 'promotions-body',
+            paginationId: 'promotions-pagination',
+            tableCardId: 'promotions-card',
+            clearBtnId: 'promotions-clear',
+            enableCopy: false,
+        });
+    </script>
+@stop

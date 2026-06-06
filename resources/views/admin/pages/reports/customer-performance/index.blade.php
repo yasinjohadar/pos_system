@@ -4,47 +4,149 @@
     تقرير أداء العملاء
 @stop
 
+@section('css')
+    @include('admin.components.premium.styles')
+    <style>@include('admin.pages.reports.product-performance.partials.styles')</style>
+@stop
+
 @section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
-            <div class="my-auto"><h5 class="page-title fs-21 mb-1">تقرير أداء العملاء</h5></div>
-            <div>
-                <a href="{{ route('admin.reports.customer-performance.top') }}" class="btn btn-outline-primary btn-sm me-1">أفضل العملاء</a>
-                <a href="{{ route('admin.reports.customer-performance.inactive') }}" class="btn btn-outline-secondary btn-sm">عملاء غير نشطين</a>
-            </div>
-        </div>
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-body">
-                <form method="GET" class="row g-3 align-items-end">
-                    <div class="col-md-3"><label class="form-label">من تاريخ</label><input type="date" name="from" class="form-control" value="{{ $from }}"></div>
-                    <div class="col-md-3"><label class="form-label">إلى تاريخ</label><input type="date" name="to" class="form-control" value="{{ $to }}"></div>
-                    <div class="col-md-2"><button type="submit" class="btn btn-primary"><i class="fas fa-filter me-1"></i> عرض</button></div>
-                </form>
-            </div>
-        </div>
-        <div class="card shadow-sm border-0">
-            <div class="card-body p-0">
-                <table class="table table-striped table-bordered mb-0">
-                    <thead class="table-light">
-                        <tr><th>العميل</th><th class="text-end">عدد الفواتير</th><th class="text-end">إجمالي المبيعات</th><th class="text-end">متوسط الفاتورة</th><th>آخر شراء</th></tr>
-                    </thead>
-                    <tbody>
-                        @forelse($rows as $row)
-                            <tr>
-                                <td>{{ $row->customer_name }}</td>
-                                <td class="text-end">{{ $row->invoice_count }}</td>
-                                <td class="text-end">{{ number_format($row->total_sales, 2) }}</td>
-                                <td class="text-end">{{ number_format($row->avg_invoice_value, 2) }}</td>
-                                <td>{{ $row->last_invoice_date ? \Carbon\Carbon::parse($row->last_invoice_date)->format('Y-m-d') : '—' }}</td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="5" class="text-center">لا توجد بيانات.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
+
+                @include('admin.components.premium.flash')
+
+                <div class="users-header">
+                    <h5 class="users-page-title">تقرير أداء العملاء</h5>
+                    <a href="{{ route('admin.reports.customer-performance.index', array_merge(request()->only(['from', 'to']), ['format' => 'csv'])) }}"
+                        class="users-btn-secondary" id="customer-performance-export">
+                        <i class="fas fa-file-csv"></i> تصدير CSV
+                    </a>
+                </div>
+
+                @include('admin.pages.reports.customer-performance.partials.nav', ['active' => 'index'])
+
+                <div class="users-filters-card">
+                    <form id="customer-performance-filters" action="{{ route('admin.reports.customer-performance.index') }}" method="GET" class="users-filters-form">
+                        <input type="date" name="from" class="users-search-input users-filter-date"
+                            value="{{ $from }}" title="من تاريخ">
+                        <input type="date" name="to" class="users-search-input users-filter-date"
+                            value="{{ $to }}" title="إلى تاريخ">
+
+                        <button type="submit" class="users-btn-filter users-btn-filter--search">
+                            <i class="fas fa-filter me-1"></i> عرض
+                        </button>
+                        <button type="button" id="customer-performance-clear" class="users-btn-filter users-btn-filter--clear">
+                            <i class="fas fa-times me-1"></i> مسح
+                        </button>
+                    </form>
+                </div>
+
+                <div class="users-table-card" id="customer-performance-card">
+                    <div class="table-responsive">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th style="min-width: 200px;">العميل</th>
+                                    <th>عدد الفواتير</th>
+                                    <th>إجمالي المبيعات</th>
+                                    <th>متوسط الفاتورة</th>
+                                    <th>آخر شراء</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customer-performance-body">
+                                @include('admin.pages.reports.customer-performance.partials.table-rows')
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
-</div>
+@stop
+
+@section('script')
+    @include('admin.components.premium.scripts')
+    <script>
+        (function () {
+            var filtersForm = document.getElementById('customer-performance-filters');
+            var tableBody = document.getElementById('customer-performance-body');
+            var tableCard = document.getElementById('customer-performance-card');
+            var clearBtn = document.getElementById('customer-performance-clear');
+            var exportLink = document.getElementById('customer-performance-export');
+            var isLoading = false;
+
+            function getParams() {
+                return new URLSearchParams(new FormData(filtersForm));
+            }
+
+            function updateExportLink() {
+                if (!exportLink) return;
+                var params = getParams();
+                params.set('format', 'csv');
+                exportLink.href = filtersForm.action + '?' + params.toString();
+            }
+
+            function updateUrl(params) {
+                var url = new URL(window.location.href);
+                url.search = params.toString();
+                window.history.replaceState({}, '', url);
+                updateExportLink();
+            }
+
+            function fetchReport() {
+                if (!filtersForm || !tableBody || isLoading) return;
+
+                var params = getParams();
+                isLoading = true;
+                if (tableCard) tableCard.classList.add('users-table-card--loading');
+                updateUrl(params);
+
+                fetch(filtersForm.action + '?' + params.toString(), {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                })
+                    .then(function (r) {
+                        if (!r.ok) throw new Error('Network error');
+                        return r.json();
+                    })
+                    .then(function (data) {
+                        tableBody.innerHTML = data.tbody;
+                    })
+                    .catch(function () {
+                        AdminPremium.showToast('حدث خطأ أثناء تحميل التقرير', 'error');
+                    })
+                    .finally(function () {
+                        isLoading = false;
+                        if (tableCard) tableCard.classList.remove('users-table-card--loading');
+                    });
+            }
+
+            if (filtersForm) {
+                filtersForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    fetchReport();
+                });
+
+                filtersForm.querySelectorAll('.users-filter-date').forEach(function (input) {
+                    input.addEventListener('change', fetchReport);
+                });
+            }
+
+            if (clearBtn && filtersForm) {
+                clearBtn.addEventListener('click', function () {
+                    var today = new Date();
+                    var firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                    filtersForm.from.value = firstDay.toISOString().slice(0, 10);
+                    filtersForm.to.value = today.toISOString().slice(0, 10);
+                    fetchReport();
+                });
+            }
+
+            updateExportLink();
+        })();
+    </script>
 @stop

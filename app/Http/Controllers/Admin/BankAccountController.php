@@ -26,7 +26,14 @@ class BankAccountController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $bankAccounts = $query->paginate(15);
+        $bankAccounts = $query->paginate(15)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.sales.bank-accounts.partials.table-rows', compact('bankAccounts'))->render(),
+                'pagination' => view('admin.pages.sales.bank-accounts.partials.pagination', compact('bankAccounts'))->render(),
+            ]);
+        }
 
         return view('admin.pages.sales.bank-accounts.index', compact('bankAccounts'));
     }

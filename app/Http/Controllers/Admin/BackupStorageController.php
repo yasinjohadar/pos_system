@@ -33,8 +33,8 @@ class BackupStorageController extends Controller
     public function create()
     {
         $drivers = BackupStorageConfig::DRIVERS;
-        $config = ['path' => 'backups']; // Default config
-        return view('admin.pages.backup-storage.create', compact('drivers', 'config'));
+
+        return view('admin.pages.backup-storage.create', compact('drivers'));
     }
 
     /**

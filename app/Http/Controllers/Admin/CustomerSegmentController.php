@@ -17,12 +17,26 @@ class CustomerSegmentController extends Controller
         $this->middleware('permission:customer-segment-delete')->only('destroy');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $segments = CustomerSegment::withCount('customers')
-            ->orderByDesc('is_active')
-            ->orderBy('name')
-            ->paginate(20);
+        $query = CustomerSegment::withCount('customers')->orderByDesc('is_active')->orderBy('name');
+
+        if ($request->filled('query')) {
+            $search = $request->input('query');
+            $query->where('name', 'like', "%{$search}%");
+        }
+        if ($request->filled('is_active')) {
+            $query->where('is_active', $request->boolean('is_active'));
+        }
+
+        $segments = $query->paginate(20)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.sales.customer-segments.partials.table-rows', compact('segments'))->render(),
+                'pagination' => view('admin.pages.sales.customer-segments.partials.pagination', compact('segments'))->render(),
+            ]);
+        }
 
         return view('admin.pages.sales.customer-segments.index', compact('segments'));
     }

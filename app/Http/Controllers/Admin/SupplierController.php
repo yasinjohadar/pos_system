@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\MergesPhoneInput;
 use App\Http\Controllers\Controller;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 
 class SupplierController extends Controller
 {
+    use MergesPhoneInput;
     public function __construct()
     {
         $this->middleware('auth');
@@ -16,6 +18,39 @@ class SupplierController extends Controller
         $this->middleware('permission:supplier-edit')->only(['edit', 'update']);
         $this->middleware('permission:supplier-delete')->only('destroy');
         $this->middleware('permission:supplier-show')->only(['show', 'statement']);
+        $this->middleware('permission:supplier-list|purchase-invoice-create|purchase-invoice-edit')->only('searchSelect');
+    }
+
+    /**
+     * بحث الموردين لقوائم الاختيار (Select2 AJAX).
+     */
+    public function searchSelect(Request $request)
+    {
+        $search = trim((string) $request->input('search', $request->input('q', '')));
+
+        $query = Supplier::query()
+            ->where('is_active', true)
+            ->orderBy('name');
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+                if (is_numeric($search)) {
+                    $q->orWhere('id', $search);
+                }
+            });
+        }
+
+        $suppliers = $query->limit(25)->get(['id', 'name', 'phone']);
+
+        return response()->json([
+            'results' => $suppliers->map(fn ($s) => [
+                'id' => $s->id,
+                'text' => $s->name . ($s->phone ? ' (' . $s->phone . ')' : ''),
+            ]),
+        ]);
     }
 
     public function index(Request $request)
@@ -35,7 +70,14 @@ class SupplierController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $suppliers = $query->paginate(15);
+        $suppliers = $query->paginate(15)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.purchases.suppliers.partials.table-rows', compact('suppliers'))->render(),
+                'pagination' => view('admin.pages.purchases.suppliers.partials.pagination', compact('suppliers'))->render(),
+            ]);
+        }
 
         return view('admin.pages.purchases.suppliers.index', compact('suppliers'));
     }
@@ -47,14 +89,15 @@ class SupplierController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $validated = $this->validateRequestWithPhone($request, array_merge([
             'name' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',
             'address' => 'nullable|string',
             'opening_balance' => 'nullable|numeric',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
+        ], $this->phoneRules('phone')), [
+            'phone.regex' => 'رقم الهاتف غير صحيح — أدخل الرقم بدون صفر في البداية',
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);
@@ -93,14 +136,15 @@ class SupplierController extends Controller
 
     public function update(Request $request, Supplier $supplier)
     {
-        $validated = $request->validate([
+        $validated = $this->validateRequestWithPhone($request, array_merge([
             'name' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',
             'address' => 'nullable|string',
             'opening_balance' => 'nullable|numeric',
             'notes' => 'nullable|string',
             'is_active' => 'boolean',
+        ], $this->phoneRules('phone')), [
+            'phone.regex' => 'رقم الهاتف غير صحيح — أدخل الرقم بدون صفر في البداية',
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);

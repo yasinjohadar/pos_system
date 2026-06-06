@@ -17,11 +17,33 @@ class ChartOfAccountController extends Controller
         $this->middleware('permission:chart-of-account-delete')->only('destroy');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $accounts = ChartOfAccount::withCount('journalEntryLines')
-            ->orderBy('code')
-            ->paginate(20);
+        $query = ChartOfAccount::withCount('journalEntryLines')->orderBy('code');
+
+        if ($request->filled('query')) {
+            $search = $request->input('query');
+            $query->where(function ($q) use ($search) {
+                $q->where('code', 'like', "%{$search}%")
+                    ->orWhere('name', 'like', "%{$search}%");
+            });
+        }
+        if ($request->filled('type')) {
+            $query->where('type', $request->input('type'));
+        }
+        if ($request->filled('is_active')) {
+            $query->where('is_active', $request->boolean('is_active'));
+        }
+
+        $accounts = $query->paginate(20)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.chart-of-accounts.partials.table-rows', compact('accounts'))->render(),
+                'pagination' => view('admin.pages.chart-of-accounts.partials.pagination', compact('accounts'))->render(),
+            ]);
+        }
+
         return view('admin.pages.chart-of-accounts.index', compact('accounts'));
     }
 

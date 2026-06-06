@@ -56,17 +56,28 @@ class SaleInvoiceController extends Controller
         $branches = Branch::where('is_active', true)->orderBy('name')->get();
         $customers = Customer::where('is_active', true)->orderBy('name')->get();
 
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.sales.invoices.partials.table-rows', compact('invoices'))->render(),
+                'pagination' => view('admin.pages.sales.invoices.partials.pagination', compact('invoices'))->render(),
+            ]);
+        }
+
         return view('admin.pages.sales.invoices.index', compact('invoices', 'branches', 'customers'));
     }
 
     public function create()
     {
         $branches = Branch::where('is_active', true)->orderBy('name')->get();
-        $customers = Customer::where('is_active', true)->orderBy('name')->get();
-        $products = Product::where('is_active', true)->with('unit')->orderBy('name')->get();
         $warehouses = Warehouse::where('is_active', true)->with('branch')->orderBy('name')->get();
+        $selectedCustomer = old('customer_id') ? Customer::find(old('customer_id')) : null;
 
-        return view('admin.pages.sales.invoices.create', compact('branches', 'customers', 'products', 'warehouses'));
+        return view('admin.pages.sales.invoices.create', [
+            'branches' => $branches,
+            'warehouses' => $warehouses,
+            'selectedCustomer' => $selectedCustomer,
+            'oldProducts' => $this->resolveItemProducts(),
+        ]);
     }
 
     public function store(Request $request, PricingService $pricingService)
@@ -175,28 +186,54 @@ class SaleInvoiceController extends Controller
     public function print(SaleInvoice $saleInvoice)
     {
         $saleInvoice->load(['branch', 'customer', 'warehouse', 'user', 'coupon', 'items.product']);
-        return view('admin.pages.sales.invoices.print', compact('saleInvoice'));
+        $companySettings = app(\App\Services\Settings\CompanySettingsService::class)->getSettings();
+        $eInvoiceService = app(\App\Services\EInvoice\EInvoiceService::class);
+        $eInvoiceQr = $eInvoiceService->generateQRCode($saleInvoice);
+
+        return view('admin.pages.sales.invoices.print', compact('saleInvoice', 'companySettings', 'eInvoiceQr'));
+    }
+
+    public function exportEInvoice(SaleInvoice $saleInvoice)
+    {
+        $saleInvoice->load(['branch', 'customer', 'items.product']);
+        $service = app(\App\Services\EInvoice\EInvoiceService::class);
+        $errors = $service->validateInvoice($saleInvoice);
+        if ($errors) {
+            return back()->with('error', implode(' ', $errors));
+        }
+
+        return response($service->generateXML($saleInvoice), 200, [
+            'Content-Type' => 'application/xml',
+            'Content-Disposition' => 'attachment; filename="invoice-' . $saleInvoice->number . '.xml"',
+        ]);
     }
 
     public function edit(SaleInvoice $saleInvoice)
     {
-        if ($saleInvoice->status !== SaleInvoice::STATUS_DRAFT) {
+        if ($saleInvoice->status !== SaleInvoice::STATUS_DRAFT && !auth()->user()->can('edit_confirmed_invoice')) {
             return redirect()->route('admin.sale-invoices.show', $saleInvoice)
                 ->with('error', 'لا يمكن تعديل فاتورة مؤكدة أو ملغاة.');
         }
 
         $saleInvoice->load('items.product');
         $branches = Branch::where('is_active', true)->orderBy('name')->get();
-        $customers = Customer::where('is_active', true)->orderBy('name')->get();
-        $products = Product::where('is_active', true)->with('unit')->orderBy('name')->get();
         $warehouses = Warehouse::where('is_active', true)->with('branch')->orderBy('name')->get();
+        $selectedCustomer = old('customer_id')
+            ? Customer::find(old('customer_id'))
+            : $saleInvoice->customer;
 
-        return view('admin.pages.sales.invoices.edit', compact('saleInvoice', 'branches', 'customers', 'products', 'warehouses'));
+        return view('admin.pages.sales.invoices.edit', [
+            'saleInvoice' => $saleInvoice,
+            'branches' => $branches,
+            'warehouses' => $warehouses,
+            'selectedCustomer' => $selectedCustomer,
+            'oldProducts' => $this->resolveItemProducts($saleInvoice),
+        ]);
     }
 
     public function update(Request $request, SaleInvoice $saleInvoice, PricingService $pricingService)
     {
-        if ($saleInvoice->status !== SaleInvoice::STATUS_DRAFT) {
+        if ($saleInvoice->status !== SaleInvoice::STATUS_DRAFT && !auth()->user()->can('edit_confirmed_invoice')) {
             return redirect()->route('admin.sale-invoices.index')
                 ->with('error', 'لا يمكن تعديل الفاتورة.');
         }
@@ -421,16 +458,44 @@ class SaleInvoiceController extends Controller
     /**
      * جلب سعر البيع للمنتج حسب الفرع (للاستخدام في نموذج الفاتورة).
      */
-    public function getProductPrice(Request $request)
+    public function getProductPrice(Request $request, PricingService $pricingService)
     {
         $productId = $request->input('product_id');
         $branchId = $request->input('branch_id');
         if (!$productId) {
             return response()->json(['price' => 0]);
         }
+
         $product = Product::find($productId);
-        $price = $product ? $product->getPriceForBranch($branchId ? (int) $branchId : null, 'retail') : 0;
-        return response()->json(['price' => round($price, 2)]);
+        if (!$product) {
+            return response()->json(['price' => 0]);
+        }
+
+        $customer = $request->filled('customer_id')
+            ? Customer::find($request->input('customer_id'))
+            : null;
+
+        $pricing = $pricingService->calculateItemPrice(
+            $product,
+            $customer,
+            1,
+            $branchId ? (int) $branchId : null
+        );
+
+        return response()->json(['price' => round($pricing['unit_price'], 2)]);
+    }
+
+    private function resolveItemProducts(?SaleInvoice $saleInvoice = null)
+    {
+        $ids = collect(old('items', []))->pluck('product_id')->filter()->unique();
+
+        if ($ids->isEmpty() && $saleInvoice) {
+            $ids = $saleInvoice->items->pluck('product_id')->unique();
+        }
+
+        return $ids->isNotEmpty()
+            ? Product::whereIn('id', $ids)->get()->keyBy('id')
+            : collect();
     }
 
     /**

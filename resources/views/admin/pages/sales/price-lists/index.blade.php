@@ -1,79 +1,90 @@
 @extends('admin.layouts.master')
 
 @section('page-title')
-قوائم الأسعار
+    قوائم الأسعار
+@stop
+
+@section('css')
+    @include('admin.components.premium.styles')
 @stop
 
 @section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center my-4">
-            <h4 class="mb-0">قوائم الأسعار</h4>
-            @can('price-list-create')
-                <a href="{{ route('admin.price-lists.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> إضافة قائمة أسعار جديدة
-                </a>
-            @endcan
-        </div>
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
 
-        <div class="card">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-bordered mb-0">
-                        <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>الاسم</th>
-                            <th>الوصف</th>
-                            <th>الحالة</th>
-                            <th>عدد المنتجات</th>
-                            <th>التحكم</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @forelse($priceLists as $list)
-                            <tr>
-                                <td>{{ $list->id }}</td>
-                                <td>{{ $list->name }}</td>
-                                <td>{{ \Illuminate\Support\Str::limit($list->description, 60) }}</td>
-                                <td>
-                                    <span class="badge {{ $list->is_active ? 'bg-success' : 'bg-secondary' }}">
-                                        {{ $list->is_active ? 'نشطة' : 'متوقفة' }}
-                                    </span>
-                                </td>
-                                <td>{{ $list->items_count }}</td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        @can('price-list-edit')
-                                            <a href="{{ route('admin.price-lists.edit', $list) }}"
-                                               class="btn btn-sm btn-warning">تعديل</a>
-                                        @endcan
-                                        @can('price-list-delete')
-                                            <form action="{{ route('admin.price-lists.destroy', $list) }}" method="POST"
-                                                  onsubmit="return confirm('هل أنت متأكد من حذف هذه القائمة؟');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger">حذف</button>
-                                            </form>
-                                        @endcan
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="text-center">لا توجد قوائم أسعار حالياً.</td>
-                            </tr>
-                        @endforelse
-                        </tbody>
-                    </table>
+                @include('admin.components.premium.flash')
+
+                <div class="users-header">
+                    <h5 class="users-page-title">قوائم الأسعار</h5>
+                    @can('price-list-create')
+                        <a href="{{ route('admin.price-lists.create') }}" class="users-btn-create">
+                            <i class="fas fa-plus"></i>
+                            إضافة قائمة أسعار
+                        </a>
+                    @endcan
                 </div>
 
-                <div class="mt-3">
-                    {{ $priceLists->links() }}
+                <div class="users-filters-card">
+                    <form id="price-lists-filters" action="{{ route('admin.price-lists.index') }}" method="GET" class="users-filters-form">
+                        <input type="text" name="query" class="users-search-input"
+                            placeholder="بحث بالاسم" value="{{ request('query') }}" autocomplete="off">
+
+                        <select name="is_active" class="users-select">
+                            <option value="">جميع الحالات</option>
+                            <option value="1" {{ request('is_active') === '1' ? 'selected' : '' }}>نشطة</option>
+                            <option value="0" {{ request('is_active') === '0' ? 'selected' : '' }}>متوقفة</option>
+                        </select>
+
+                        <button type="submit" class="users-btn-filter users-btn-filter--search">
+                            <i class="fas fa-search me-1"></i> بحث
+                        </button>
+                        <button type="button" id="price-lists-clear" class="users-btn-filter users-btn-filter--clear">
+                            <i class="fas fa-times me-1"></i> مسح
+                        </button>
+                    </form>
                 </div>
+
+                <div class="users-table-card" id="price-lists-card">
+                    <div class="table-responsive">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">#</th>
+                                    <th style="min-width: 160px;">الاسم</th>
+                                    <th style="min-width: 200px;">الوصف</th>
+                                    <th>الحالة</th>
+                                    <th>عدد المنتجات</th>
+                                    <th style="min-width: 130px;">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="price-lists-body">
+                                @include('admin.pages.sales.price-lists.partials.table-rows')
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="users-pagination" id="price-lists-pagination">
+                        @include('admin.pages.sales.price-lists.partials.pagination')
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
-</div>
+
+    @include('admin.components.delete-confirm-modal')
 @stop
 
+@section('script')
+    @include('admin.components.premium.scripts')
+    <script>
+        AdminPremium.initIndex({
+            filtersFormId: 'price-lists-filters',
+            tableBodyId: 'price-lists-body',
+            paginationId: 'price-lists-pagination',
+            tableCardId: 'price-lists-card',
+            clearBtnId: 'price-lists-clear',
+            enableCopy: false,
+        });
+    </script>
+@stop

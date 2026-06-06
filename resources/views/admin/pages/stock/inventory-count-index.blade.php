@@ -4,53 +4,45 @@
     جرد المخزون
 @stop
 
+@section('css')
+    @include('admin.components.premium.styles')
+@stop
+
 @section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
-            <div class="my-auto">
-                <h5 class="page-title fs-21 mb-1">جرد المخزون</h5>
-            </div>
-            <div>
-                <a href="{{ route('admin.stock.balances.index') }}" class="btn btn-outline-primary btn-sm">أرصدة المخزون</a>
-            </div>
-        </div>
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
 
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-        @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-
-        <div class="row">
-            <div class="col-12">
-                <div class="card shadow-sm border-0">
-                    <div class="card-body">
-                        <form method="GET" action="{{ route('admin.stock.inventory-count.index') }}" class="row g-3">
-                            <div class="col-md-4">
-                                <label for="warehouse_id" class="form-label">اختر المخزن للجرد</label>
-                                <select class="form-select" id="warehouse_id" name="warehouse_id" required>
-                                    <option value="">— اختر المخزن —</option>
-                                    @foreach($warehouses as $w)
-                                        <option value="{{ $w->id }}" {{ request('warehouse_id') == $w->id ? 'selected' : '' }}>{{ $w->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-2 d-flex align-items-end">
-                                <button type="submit" class="btn btn-primary"><i class="fas fa-list me-1"></i> عرض نموذج الجرد</button>
-                            </div>
-                        </form>
-                    </div>
+                <div class="users-header">
+                    <h5 class="users-page-title">جرد المخزون</h5>
+                    <a href="{{ route('admin.stock.balances.index') }}" class="users-btn-secondary">
+                        <i class="fas fa-warehouse"></i> أرصدة المخزون
+                    </a>
                 </div>
+
+                @include('admin.components.premium.flash')
+
+                <div class="users-form-card" style="max-width: 640px;">
+                    <div class="users-form-card__header">
+                        <h6 class="users-form-card__title"><i class="fas fa-clipboard-list"></i> اختيار المخزن</h6>
+                    </div>
+                    <form method="GET" action="{{ route('admin.stock.inventory-count.index') }}" class="users-form-card__body">
+                        <div class="users-form-group">
+                            <label for="warehouse_id" class="users-form-label"><i class="fas fa-warehouse"></i> المخزن للجرد</label>
+                            <select class="users-form-select" id="warehouse_id" name="warehouse_id" required>
+                                <option value="">— اختر المخزن —</option>
+                                @foreach ($warehouses as $w)
+                                    <option value="{{ $w->id }}" {{ request('warehouse_id') == $w->id ? 'selected' : '' }}>{{ $w->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="users-form-actions" style="border-top: none; padding-top: 0;">
+                            <button type="submit" class="users-btn-submit"><i class="fas fa-list"></i> عرض نموذج الجرد</button>
+                        </div>
+                    </form>
+                </div>
+
             </div>
         </div>
     </div>
-</div>
 @stop

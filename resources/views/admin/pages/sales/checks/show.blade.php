@@ -4,76 +4,143 @@
     تفاصيل الشيك: {{ $check->check_number }}
 @stop
 
+@section('css')
+    @include('admin.components.premium.styles')
+@stop
+
 @section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
-            <div class="my-auto">
-                <h5 class="page-title fs-21 mb-1">تفاصيل الشيك: {{ $check->check_number }}</h5>
-            </div>
-            <div class="d-flex gap-2">
-                @can('check-edit')
-                @if($check->status === \App\Models\Check::STATUS_UNDER_COLLECTION)
-                    <form action="{{ route('admin.checks.update-status', $check) }}" method="POST" class="d-inline" onsubmit="return confirm('تحديث الحالة إلى محصل؟');">
-                        @csrf
-                        <input type="hidden" name="status" value="collected">
-                        <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-check me-1"></i> محصل</button>
-                    </form>
-                    <form action="{{ route('admin.checks.update-status', $check) }}" method="POST" class="d-inline" onsubmit="return confirm('تحديث الحالة إلى مرتجع؟');">
-                        @csrf
-                        <input type="hidden" name="status" value="returned">
-                        <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-undo me-1"></i> مرتجع</button>
-                    </form>
-                @endif
-                @endcan
-                <a href="{{ route('admin.checks.index') }}" class="btn btn-secondary btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i> رجوع
-                </a>
-            </div>
-        </div>
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
 
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
+                @include('admin.components.premium.flash')
 
-        <div class="row">
-            <div class="col-lg-6">
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header"><h6 class="mb-0">بيانات الشيك</h6></div>
-                    <div class="card-body">
-                        <table class="table table-borderless mb-0">
-                            <tr><td class="text-muted" width="160">رقم الشيك:</td><td>{{ $check->check_number }}</td></tr>
-                            <tr><td class="text-muted">المبلغ:</td><td>{{ number_format($check->amount, 2) }}</td></tr>
-                            <tr><td class="text-muted">البنك:</td><td>{{ $check->bank_account_id ? ($check->bankAccount->name ?? '—') : ($check->bank_name ?? '—') }}</td></tr>
-                            <tr><td class="text-muted">تاريخ الاستحقاق:</td><td>{{ $check->due_date->format('Y-m-d') }}</td></tr>
-                            <tr><td class="text-muted">الحالة:</td>
-                                <td>
-                                    @if($check->status === \App\Models\Check::STATUS_UNDER_COLLECTION)
-                                        <span class="badge bg-warning">تحت التحصيل</span>
-                                    @elseif($check->status === \App\Models\Check::STATUS_COLLECTED)
-                                        <span class="badge bg-success">محصل</span>
-                                    @else
-                                        <span class="badge bg-danger">مرتجع</span>
-                                    @endif
-                                </td>
-                            </tr>
-                            @if($check->salePayment)
-                            <tr><td class="text-muted">مرتبط بفاتورة بيع:</td><td><a href="{{ route('admin.sale-invoices.show', $check->salePayment->sale_invoice_id) }}">{{ $check->salePayment->saleInvoice->number ?? '—' }}</a></td></tr>
+                <div class="users-header">
+                    <h5 class="users-page-title">تفاصيل الشيك: {{ $check->check_number }}</h5>
+                    <div class="users-header-actions">
+                        @can('check-edit')
+                            @if ($check->status === \App\Models\Check::STATUS_UNDER_COLLECTION)
+                                <form action="{{ route('admin.checks.update-status', $check) }}" method="POST" class="d-inline"
+                                    onsubmit="return confirm('تحديث الحالة إلى محصل؟');">
+                                    @csrf
+                                    <input type="hidden" name="status" value="collected">
+                                    <button type="submit" class="users-btn-submit" style="padding: 0.5rem 1rem;">
+                                        <i class="fas fa-check"></i> محصل
+                                    </button>
+                                </form>
+                                <form action="{{ route('admin.checks.update-status', $check) }}" method="POST" class="d-inline"
+                                    onsubmit="return confirm('تحديث الحالة إلى مرتجع؟');">
+                                    @csrf
+                                    <input type="hidden" name="status" value="returned">
+                                    <button type="submit" class="users-action-btn users-action-btn--delete" title="مرتجع">
+                                        <i class="fas fa-undo"></i>
+                                    </button>
+                                </form>
                             @endif
-                            @if($check->supplierPayment)
-                            <tr><td class="text-muted">مرتبط بفاتورة شراء:</td><td><a href="{{ route('admin.purchase-invoices.show', $check->supplierPayment->purchase_invoice_id) }}">{{ $check->supplierPayment->purchaseInvoice->number ?? '—' }}</a></td></tr>
-                            @endif
-                            @if($check->notes)
-                            <tr><td class="text-muted">ملاحظات:</td><td>{{ $check->notes }}</td></tr>
-                            @endif
-                        </table>
+                        @endcan
+                        <a href="{{ route('admin.checks.index') }}" class="users-btn-secondary">
+                            <i class="fas fa-arrow-right"></i> رجوع
+                        </a>
                     </div>
                 </div>
+
+                <div class="users-detail-grid">
+                    <div class="users-detail-card">
+                        <div class="users-detail-card__header">
+                            <h6 class="users-detail-card__title"><i class="fas fa-money-check-alt"></i> بيانات الشيك</h6>
+                        </div>
+                        <div class="users-detail-card__body">
+                            <div class="users-detail-list">
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-hashtag"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">رقم الشيك</span>
+                                        <div class="users-detail-item__value">{{ $check->check_number }}</div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-coins"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">المبلغ</span>
+                                        <div class="users-detail-item__value"><span class="users-amount">{{ number_format($check->amount, 2) }}</span></div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-landmark"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">البنك</span>
+                                        <div class="users-detail-item__value">
+                                            {{ $check->bank_account_id ? ($check->bankAccount->name ?? '—') : ($check->bank_name ?? '—') }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-calendar"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">تاريخ الاستحقاق</span>
+                                        <div class="users-detail-item__value">{{ $check->due_date->format('Y-m-d') }}</div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-flag"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">الحالة</span>
+                                        <div class="users-detail-item__value">
+                                            @if ($check->status === \App\Models\Check::STATUS_UNDER_COLLECTION)
+                                                <span class="users-badge users-badge--role" style="background: rgba(245, 158, 11, 0.15); color: #d97706;">تحت التحصيل</span>
+                                            @elseif ($check->status === \App\Models\Check::STATUS_COLLECTED)
+                                                <span class="users-badge users-badge--active">محصل</span>
+                                            @else
+                                                <span class="users-badge users-badge--inactive">مرتجع</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                @if ($check->salePayment)
+                                    <div class="users-detail-item">
+                                        <div class="users-detail-item__icon"><i class="fas fa-file-invoice"></i></div>
+                                        <div class="users-detail-item__content">
+                                            <span class="users-detail-item__label">مرتبط بفاتورة بيع</span>
+                                            <div class="users-detail-item__value">
+                                                <a href="{{ route('admin.sale-invoices.show', $check->salePayment->sale_invoice_id) }}" class="users-user-name">
+                                                    {{ $check->salePayment->saleInvoice->number ?? '—' }}
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                                @if ($check->supplierPayment)
+                                    <div class="users-detail-item">
+                                        <div class="users-detail-item__icon"><i class="fas fa-file-invoice-dollar"></i></div>
+                                        <div class="users-detail-item__content">
+                                            <span class="users-detail-item__label">مرتبط بفاتورة شراء</span>
+                                            <div class="users-detail-item__value">
+                                                <a href="{{ route('admin.purchase-invoices.show', $check->supplierPayment->purchase_invoice_id) }}" class="users-user-name">
+                                                    {{ $check->supplierPayment->purchaseInvoice->number ?? '—' }}
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                                @if ($check->notes)
+                                    <div class="users-detail-item">
+                                        <div class="users-detail-item__icon"><i class="fas fa-sticky-note"></i></div>
+                                        <div class="users-detail-item__content">
+                                            <span class="users-detail-item__label">ملاحظات</span>
+                                            <div class="users-detail-item__value">{{ $check->notes }}</div>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
-</div>
+@stop
+
+@section('script')
+    @include('admin.components.premium.scripts')
 @stop

@@ -4,90 +4,88 @@
     شرائح العملاء
 @stop
 
+@section('css')
+    @include('admin.components.premium.styles')
+@stop
+
 @section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center my-4">
-            <h4 class="mb-0">شرائح العملاء</h4>
-            @can('customer-segment-create')
-                <a href="{{ route('admin.customer-segments.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> إضافة شريحة
-                </a>
-            @endcan
-        </div>
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
 
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-        @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
+                @include('admin.components.premium.flash')
 
-        <div class="card">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-bordered mb-0">
-                        <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>الاسم</th>
-                            <th>الوصف</th>
-                            <th>اللون</th>
-                            <th>عدد العملاء</th>
-                            <th>الحالة</th>
-                            <th>التحكم</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @forelse($segments as $segment)
-                            <tr>
-                                <td>{{ $segment->id }}</td>
-                                <td>{{ $segment->name }}</td>
-                                <td>{{ \Illuminate\Support\Str::limit($segment->description, 50) ?: '—' }}</td>
-                                <td>
-                                    <span class="badge" style="background-color: {{ $segment->color }}; color: #fff;">{{ $segment->color }}</span>
-                                </td>
-                                <td>{{ $segment->customers_count }}</td>
-                                <td>
-                                    <span class="badge {{ $segment->is_active ? 'bg-success' : 'bg-secondary' }}">
-                                        {{ $segment->is_active ? 'نشط' : 'غير نشط' }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        @can('customer-segment-edit')
-                                            <a href="{{ route('admin.customer-segments.edit', $segment) }}" class="btn btn-sm btn-warning">تعديل</a>
-                                        @endcan
-                                        @can('customer-segment-delete')
-                                            <form action="{{ route('admin.customer-segments.destroy', $segment) }}" method="POST"
-                                                  onsubmit="return confirm('هل أنت متأكد من حذف هذه الشريحة؟');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger">حذف</button>
-                                            </form>
-                                        @endcan
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center">لا توجد شرائح عملاء حالياً.</td>
-                            </tr>
-                        @endforelse
-                        </tbody>
-                    </table>
+                <div class="users-header">
+                    <h5 class="users-page-title">شرائح العملاء</h5>
+                    @can('customer-segment-create')
+                        <a href="{{ route('admin.customer-segments.create') }}" class="users-btn-create">
+                            <i class="fas fa-plus"></i>
+                            إضافة شريحة
+                        </a>
+                    @endcan
                 </div>
-                <div class="mt-3">
-                    {{ $segments->links() }}
+
+                <div class="users-filters-card">
+                    <form id="customer-segments-filters" action="{{ route('admin.customer-segments.index') }}" method="GET" class="users-filters-form">
+                        <input type="text" name="query" class="users-search-input"
+                            placeholder="بحث بالاسم" value="{{ request('query') }}" autocomplete="off">
+
+                        <select name="is_active" class="users-select">
+                            <option value="">جميع الحالات</option>
+                            <option value="1" {{ request('is_active') === '1' ? 'selected' : '' }}>نشط</option>
+                            <option value="0" {{ request('is_active') === '0' ? 'selected' : '' }}>غير نشط</option>
+                        </select>
+
+                        <button type="submit" class="users-btn-filter users-btn-filter--search">
+                            <i class="fas fa-search me-1"></i> بحث
+                        </button>
+                        <button type="button" id="customer-segments-clear" class="users-btn-filter users-btn-filter--clear">
+                            <i class="fas fa-times me-1"></i> مسح
+                        </button>
+                    </form>
                 </div>
+
+                <div class="users-table-card" id="customer-segments-card">
+                    <div class="table-responsive">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">#</th>
+                                    <th style="min-width: 160px;">الاسم</th>
+                                    <th style="min-width: 200px;">الوصف</th>
+                                    <th>اللون</th>
+                                    <th>عدد العملاء</th>
+                                    <th>الحالة</th>
+                                    <th style="min-width: 130px;">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customer-segments-body">
+                                @include('admin.pages.sales.customer-segments.partials.table-rows')
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="users-pagination" id="customer-segments-pagination">
+                        @include('admin.pages.sales.customer-segments.partials.pagination')
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
-</div>
+
+    @include('admin.components.delete-confirm-modal')
+@stop
+
+@section('script')
+    @include('admin.components.premium.scripts')
+    <script>
+        AdminPremium.initIndex({
+            filtersFormId: 'customer-segments-filters',
+            tableBodyId: 'customer-segments-body',
+            paginationId: 'customer-segments-pagination',
+            tableCardId: 'customer-segments-card',
+            clearBtnId: 'customer-segments-clear',
+            enableCopy: false,
+        });
+    </script>
 @stop

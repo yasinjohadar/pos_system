@@ -25,7 +25,14 @@ class PaymentMethodController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $paymentMethods = $query->paginate(15);
+        $paymentMethods = $query->paginate(15)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.sales.payment-methods.partials.table-rows', compact('paymentMethods'))->render(),
+                'pagination' => view('admin.pages.sales.payment-methods.partials.pagination', compact('paymentMethods'))->render(),
+            ]);
+        }
 
         return view('admin.pages.sales.payment-methods.index', compact('paymentMethods'));
     }

@@ -18,21 +18,38 @@ class PriceListController extends Controller
         $this->middleware('permission:price-list-delete')->only('destroy');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $priceLists = PriceList::withCount('items')
-            ->orderByDesc('is_active')
-            ->orderBy('name')
-            ->paginate(20);
+        $query = PriceList::withCount('items')->orderByDesc('is_active')->orderBy('name');
+
+        if ($request->filled('query')) {
+            $search = $request->input('query');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+        if ($request->filled('is_active')) {
+            $query->where('is_active', $request->boolean('is_active'));
+        }
+
+        $priceLists = $query->paginate(20)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.sales.price-lists.partials.table-rows', compact('priceLists'))->render(),
+                'pagination' => view('admin.pages.sales.price-lists.partials.pagination', compact('priceLists'))->render(),
+            ]);
+        }
 
         return view('admin.pages.sales.price-lists.index', compact('priceLists'));
     }
 
     public function create()
     {
-        $products = Product::where('is_active', true)->orderBy('name')->get();
-
-        return view('admin.pages.sales.price-lists.create', compact('products'));
+        return view('admin.pages.sales.price-lists.create', [
+            'oldProducts' => $this->resolveItemProducts(),
+        ]);
     }
 
     public function store(Request $request)
@@ -71,9 +88,11 @@ class PriceListController extends Controller
     public function edit(PriceList $priceList)
     {
         $priceList->load('items.product');
-        $products = Product::where('is_active', true)->orderBy('name')->get();
 
-        return view('admin.pages.sales.price-lists.edit', compact('priceList', 'products'));
+        return view('admin.pages.sales.price-lists.edit', [
+            'priceList' => $priceList,
+            'oldProducts' => $this->resolveItemProducts($priceList),
+        ]);
     }
 
     public function update(Request $request, PriceList $priceList)
@@ -122,6 +141,19 @@ class PriceListController extends Controller
 
         return redirect()->route('admin.price-lists.index')
             ->with('success', 'تم حذف قائمة الأسعار بنجاح.');
+    }
+
+    private function resolveItemProducts(?PriceList $priceList = null)
+    {
+        $ids = collect(old('items', []))->pluck('product_id')->filter()->unique();
+
+        if ($ids->isEmpty() && $priceList) {
+            $ids = $priceList->items->pluck('product_id')->unique();
+        }
+
+        return $ids->isNotEmpty()
+            ? Product::whereIn('id', $ids)->get()->keyBy('id')
+            : collect();
     }
 }
 

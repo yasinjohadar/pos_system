@@ -4,68 +4,82 @@
     إضافة وحدة
 @stop
 
-@section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
-            <div class="my-auto">
-                <h5 class="page-title fs-21 mb-1">إضافة وحدة</h5>
-            </div>
-            <div>
-                <a href="{{ route('admin.units.index') }}" class="btn btn-secondary btn-sm">رجوع</a>
-            </div>
-        </div>
+@section('css')
+    @include('admin.components.premium.styles')
+@stop
 
-        <div class="row">
-            <div class="col-lg-8">
-                @if($errors->any())
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+@section('content')
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
+
+                <div class="users-header">
+                    <h5 class="users-page-title">إضافة وحدة</h5>
+                    <div class="users-header-actions">
+                        <a href="{{ route('admin.units.index') }}" class="users-btn-secondary">
+                            <i class="fas fa-arrow-right"></i>
+                            رجوع
+                        </a>
+                    </div>
+                </div>
+
+                @if ($errors->any())
+                    <div class="alert alert-danger alert-dismissible fade show">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>يرجى تصحيح الأخطاء التالية:</strong>
+                        <ul class="mb-0 mt-2">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 @endif
 
-                <div class="card shadow-sm border-0">
-                    <div class="card-body">
-                        <form action="{{ route('admin.units.store') }}" method="POST">
+                <div class="users-form-layout">
+                    @include('admin.components.premium.form-aside', [
+                        'icon' => 'fa-ruler-combined',
+                        'title' => 'إنشاء وحدة جديدة',
+                        'text' => 'عرّف وحدات القياس ومعاملات التحويل بينها لإدارة المنتجات بدقة.',
+                        'tips' => [
+                            'الوحدة الأساسية مستقلة بدون أب',
+                            'معامل التحويل يحدد العلاقة مع الوحدة الأب',
+                            'الرمز اختياري ويُستخدم في التقارير',
+                        ],
+                    ])
+
+                    <div class="users-form-card">
+                        <div class="users-form-card__header">
+                            <h6 class="users-form-card__title">
+                                <i class="fas fa-ruler-combined"></i>
+                                بيانات الوحدة
+                            </h6>
+                        </div>
+                        <form action="{{ route('admin.units.store') }}" method="POST" class="users-form-card__body">
                             @csrf
-                            <div class="mb-3">
-                                <label for="name" class="form-label">الاسم <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="name" name="name" value="{{ old('name') }}" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="symbol" class="form-label">الرمز</label>
-                                <input type="text" class="form-control" id="symbol" name="symbol" value="{{ old('symbol') }}" placeholder="مثال: كغ، ل، قطعة">
-                            </div>
-                            <div class="mb-3">
-                                <label for="base_unit_id" class="form-label">الوحدة الأساسية</label>
-                                <select class="form-select" id="base_unit_id" name="base_unit_id">
-                                    <option value="">— وحدة أساسية —</option>
-                                    @foreach($baseUnits as $u)
-                                        <option value="{{ $u->id }}" {{ old('base_unit_id') == $u->id ? 'selected' : '' }}>{{ $u->name }} ({{ $u->symbol }})</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="conversion_factor" class="form-label">معامل التحويل</label>
-                                <input type="number" step="0.0001" class="form-control" id="conversion_factor" name="conversion_factor" value="{{ old('conversion_factor', 1) }}">
-                                <small class="text-muted">مثال: 1 صندوق = 12 وحدة ← 12</small>
-                            </div>
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="is_active">وحدة نشطة</label>
-                                </div>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> حفظ</button>
-                                <a href="{{ route('admin.units.index') }}" class="btn btn-secondary">إلغاء</a>
+
+                            @include('admin.pages.units.partials.form-fields', [
+                                'baseUnits' => $baseUnits,
+                                'unit' => null,
+                            ])
+
+                            <div class="users-form-actions">
+                                <button type="submit" class="users-btn-submit">
+                                    <i class="fas fa-save"></i>
+                                    حفظ الوحدة
+                                </button>
+                                <a href="{{ route('admin.units.index') }}" class="users-btn-secondary">إلغاء</a>
                             </div>
                         </form>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
-</div>
+@stop
+
+@section('script')
+    @include('admin.components.premium.scripts')
+    <script>AdminPremium.initFormToggles();</script>
 @stop

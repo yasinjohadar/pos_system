@@ -34,7 +34,7 @@ class InventoryReportService
      */
     public function getReorderSuggestions(): Collection
     {
-        $balances = StockBalance::with('product')
+        $balances = StockBalance::with('product.category')
             ->selectRaw('product_id, SUM(quantity) as total_qty')
             ->groupBy('product_id')
             ->get();

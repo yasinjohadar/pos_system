@@ -154,11 +154,12 @@ class Customer extends Model
         $entries = $entries->sortBy('date')->values();
 
         $balance = (float) $this->opening_balance;
-        foreach ($entries as $i => $e) {
-            $balance += $e['debit'] - $e['credit'];
-            $entries[$i]['balance'] = round($balance, 2);
-        }
 
-        return $entries;
+        return $entries->map(function (array $entry) use (&$balance) {
+            $balance += $entry['debit'] - $entry['credit'];
+            $entry['balance'] = round($balance, 2);
+
+            return $entry;
+        })->values();
     }
 }

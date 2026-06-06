@@ -117,9 +117,14 @@ class WhatsAppWebController extends Controller
                     'message' => $errorMessage,
                 ], 500);
             } catch (\Illuminate\Http\Client\ConnectionException $e) {
+                Log::warning('WhatsApp Web: Node.js service unavailable', [
+                    'error' => $e->getMessage(),
+                    'nodejs_url' => $nodejsUrl,
+                ]);
+
                 return response()->json([
                     'success' => false,
-                    'message' => 'لا يمكن الاتصال بخدمة Node.js. تأكد من أن الخدمة تعمل على: ' . $nodejsUrl . ' - الخطأ: ' . $e->getMessage(),
+                    'message' => 'لا يمكن الاتصال بخدمة Node.js. تأكد من أن الخدمة تعمل على: ' . $nodejsUrl,
                 ], 500);
             }
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
@@ -140,7 +145,7 @@ class WhatsAppWebController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'حدث خطأ: ' . $e->getMessage(),
+                'message' => 'حدث خطأ أثناء بدء الربط. راجع سجل النظام للتفاصيل.',
             ], 500);
         }
     }

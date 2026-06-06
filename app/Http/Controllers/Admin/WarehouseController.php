@@ -14,7 +14,7 @@ class WarehouseController extends Controller
         $this->middleware('auth');
         $this->middleware('permission:warehouse-list')->only('index');
         $this->middleware('permission:warehouse-create')->only(['create', 'store']);
-        $this->middleware('permission:warehouse-edit')->only(['edit', 'update']);
+        $this->middleware('permission:warehouse-edit')->only(['edit', 'update', 'toggleStatus']);
         $this->middleware('permission:warehouse-delete')->only('destroy');
         $this->middleware('permission:warehouse-show')->only('show');
     }
@@ -23,6 +23,24 @@ class WarehouseController extends Controller
      * Display a listing of warehouses (optionally filtered by branch).
      */
     public function index(Request $request)
+    {
+        $warehouses = $this->buildWarehousesQuery($request)
+            ->paginate(15)
+            ->withQueryString();
+
+        $branches = Branch::where('is_active', true)->orderBy('name')->get();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.warehouses.partials.table-rows', compact('warehouses'))->render(),
+                'pagination' => view('admin.pages.warehouses.partials.pagination', compact('warehouses'))->render(),
+            ]);
+        }
+
+        return view('admin.pages.warehouses.index', compact('warehouses', 'branches'));
+    }
+
+    private function buildWarehousesQuery(Request $request)
     {
         $query = Warehouse::with('branch')->orderBy('name');
 
@@ -33,19 +51,16 @@ class WarehouseController extends Controller
         if ($request->filled('query')) {
             $search = $request->input('query');
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%$search%")
-                    ->orWhere('code', 'like', "%$search%");
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%");
             });
         }
 
         if ($request->filled('is_active')) {
-            $query->where('is_active', $request->boolean('is_active'));
+            $query->where('is_active', (int) $request->input('is_active'));
         }
 
-        $warehouses = $query->paginate(15);
-        $branches = Branch::where('is_active', true)->orderBy('name')->get();
-
-        return view('admin.pages.warehouses.index', compact('warehouses', 'branches'));
+        return $query;
     }
 
     /**
@@ -133,6 +148,35 @@ class WarehouseController extends Controller
 
         return redirect()->route('admin.warehouses.index')
             ->with('success', 'تم تحديث المخزن بنجاح');
+    }
+
+    /**
+     * Toggle warehouse active status.
+     */
+    public function toggleStatus(Request $request, Warehouse $warehouse)
+    {
+        try {
+            $warehouse->update(['is_active' => ! $warehouse->is_active]);
+            $warehouse->refresh();
+
+            $status = $warehouse->is_active ? 'نشط' : 'غير نشط';
+
+            return response()->json([
+                'success' => true,
+                'message' => "تم تحديث حالة المخزن إلى: {$status}",
+                'is_active' => (bool) $warehouse->is_active,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error toggling warehouse status', [
+                'warehouse_id' => $warehouse->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء تحديث حالة المخزن',
+            ], 500);
+        }
     }
 
     /**

@@ -78,6 +78,12 @@ class TrialBalanceController extends Controller
             ]);
         }
 
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.reports.trial-balance.partials.table-rows', compact('rows', 'totalDebit', 'totalCredit'))->render(),
+            ]);
+        }
+
         return view('admin.pages.reports.trial-balance.index', compact('rows', 'from', 'to', 'totalDebit', 'totalCredit'));
     }
 }

@@ -4,152 +4,191 @@
     تحويل مخزون جديد
 @stop
 
+@section('css')
+    @include('admin.components.premium.styles')
+    @include('admin.components.premium.product-select-assets')
+@stop
+
 @section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
-            <div class="my-auto">
-                <h5 class="page-title fs-21 mb-1">تحويل مخزون جديد</h5>
-            </div>
-            <div>
-                <a href="{{ route('admin.stock.transfers.index') }}" class="btn btn-secondary btn-sm">رجوع</a>
-            </div>
-        </div>
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
 
-        @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-        @if($errors->any())
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <ul class="mb-0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
+                <div class="users-header">
+                    <h5 class="users-page-title">تحويل مخزون جديد</h5>
+                    <a href="{{ route('admin.stock.transfers.index') }}" class="users-btn-secondary">
+                        <i class="fas fa-arrow-right"></i> رجوع
+                    </a>
+                </div>
 
-        <div class="row">
-            <div class="col-12">
-                <div class="card shadow-sm border-0">
-                    <div class="card-body">
-                        <form action="{{ route('admin.stock.transfers.store') }}" method="POST" id="transfer-form">
+                @include('admin.components.premium.flash')
+
+                @if ($errors->any())
+                    <div class="alert alert-danger alert-dismissible fade show">
+                        <ul class="mb-0">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                @endif
+
+                <div class="users-form-layout">
+                    @include('admin.components.premium.form-aside', [
+                        'icon' => 'fa-exchange-alt',
+                        'title' => 'تحويل بين المخازن',
+                        'text' => 'انقل كميات منتجات من مخزن إلى آخر مع تسجيل حركات خروج ودخول تلقائياً.',
+                        'tips' => ['تأكد من توفر الرصيد في المخزن المصدر', 'يمكن إضافة عدة بنود في تحويل واحد'],
+                    ])
+
+                    <div class="users-form-card">
+                        <div class="users-form-card__header">
+                            <h6 class="users-form-card__title"><i class="fas fa-truck-loading"></i> بيانات التحويل</h6>
+                        </div>
+                        <form action="{{ route('admin.stock.transfers.store') }}" method="POST" id="transfer-form" class="users-form-card__body">
                             @csrf
-                            <div class="row mb-3">
-                                <div class="col-md-4">
-                                    <label for="from_warehouse_id" class="form-label">من مخزن <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="from_warehouse_id" name="from_warehouse_id" required>
+                            <div class="users-form-grid">
+                                <div class="users-form-group">
+                                    <label for="from_warehouse_id" class="users-form-label"><i class="fas fa-warehouse"></i> من مخزن <span class="users-form-required">*</span></label>
+                                    <select class="users-form-select" id="from_warehouse_id" name="from_warehouse_id" required>
                                         <option value="">اختر المخزن</option>
-                                        @foreach($warehouses as $w)
+                                        @foreach ($warehouses as $w)
                                             <option value="{{ $w->id }}" {{ old('from_warehouse_id') == $w->id ? 'selected' : '' }}>{{ $w->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-md-4">
-                                    <label for="to_warehouse_id" class="form-label">إلى مخزن <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="to_warehouse_id" name="to_warehouse_id" required>
+                                <div class="users-form-group">
+                                    <label for="to_warehouse_id" class="users-form-label"><i class="fas fa-warehouse"></i> إلى مخزن <span class="users-form-required">*</span></label>
+                                    <select class="users-form-select" id="to_warehouse_id" name="to_warehouse_id" required>
                                         <option value="">اختر المخزن</option>
-                                        @foreach($warehouses as $w)
+                                        @foreach ($warehouses as $w)
                                             <option value="{{ $w->id }}" {{ old('to_warehouse_id') == $w->id ? 'selected' : '' }}>{{ $w->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="col-md-4">
-                                    <label for="transfer_date" class="form-label">تاريخ التحويل <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" id="transfer_date" name="transfer_date" value="{{ old('transfer_date', date('Y-m-d')) }}" required>
+                                <div class="users-form-group">
+                                    <label for="transfer_date" class="users-form-label"><i class="fas fa-calendar"></i> التاريخ <span class="users-form-required">*</span></label>
+                                    <input type="date" class="users-form-input" id="transfer_date" name="transfer_date" value="{{ old('transfer_date', date('Y-m-d')) }}" required>
+                                </div>
+                                <div class="users-form-group users-form-group--full">
+                                    <label for="notes" class="users-form-label"><i class="fas fa-sticky-note"></i> ملاحظات</label>
+                                    <textarea class="users-form-textarea" id="notes" name="notes" rows="2">{{ old('notes') }}</textarea>
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                <label for="notes" class="form-label">ملاحظات</label>
-                                <textarea class="form-control" id="notes" name="notes" rows="1">{{ old('notes') }}</textarea>
-                            </div>
 
-                            <h6 class="mb-2">البنود</h6>
-                            <div class="table-responsive mb-2">
-                                <table class="table table-bordered" id="items-table">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>المنتج</th>
-                                            <th>الكمية</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach(old('items', []) as $i => $item)
+                            <h6 class="users-form-section-title"><i class="fas fa-list"></i> بنود التحويل</h6>
+                            <div class="users-table-card users-table-card--nested">
+                                <div class="table-responsive">
+                                    <table class="users-table" id="items-table">
+                                        <thead>
                                             <tr>
-                                                <td>
-                                                    <select class="form-select form-select-sm" name="items[{{ $i }}][product_id]" required>
-                                                        <option value="">اختر المنتج</option>
-                                                        @foreach($products as $p)
-                                                            <option value="{{ $p->id }}" {{ ($item['product_id'] ?? '') == $p->id ? 'selected' : '' }}>{{ $p->name }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                </td>
-                                                <td>
-                                                    <input type="number" step="0.0001" min="0.0001" class="form-control form-control-sm" name="items[{{ $i }}][quantity]" value="{{ $item['quantity'] ?? '' }}" required>
-                                                </td>
-                                                <td><button type="button" class="btn btn-sm btn-danger remove-row"><i class="fas fa-trash"></i></button></td>
+                                                <th>المنتج</th>
+                                                <th style="width: 140px;">الكمية</th>
+                                                <th style="width: 60px;"></th>
                                             </tr>
-                                        @endforeach
-                                        @if(count(old('items', [])) == 0)
-                                            <tr class="item-row">
-                                                <td>
-                                                    <select class="form-select form-select-sm" name="items[0][product_id]" required>
-                                                        <option value="">اختر المنتج</option>
-                                                        @foreach($products as $p)
-                                                            <option value="{{ $p->id }}">{{ $p->name }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                </td>
-                                                <td>
-                                                    <input type="number" step="0.0001" min="0.0001" class="form-control form-control-sm" name="items[0][quantity]" required>
-                                                </td>
-                                                <td><button type="button" class="btn btn-sm btn-danger remove-row"><i class="fas fa-trash"></i></button></td>
-                                            </tr>
-                                        @endif
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            @php $oldItems = old('items', []); @endphp
+                                            @forelse ($oldItems as $i => $item)
+                                                <tr>
+                                                    <td>
+                                                        @include('admin.components.premium.product-select', [
+                                                            'name' => 'items[' . $i . '][product_id]',
+                                                            'id' => 'transfer_product_' . $i,
+                                                            'selected' => isset($item['product_id'], $oldProducts[$item['product_id']]) ? $oldProducts[$item['product_id']] : null,
+                                                        ])
+                                                    </td>
+                                                    <td>
+                                                        <input type="number" step="0.0001" min="0.0001" class="users-form-input" name="items[{{ $i }}][quantity]" value="{{ $item['quantity'] ?? '' }}" required>
+                                                    </td>
+                                                    <td>
+                                                        <button type="button" class="users-action-btn users-action-btn--delete remove-row" title="حذف"><i class="fas fa-trash"></i></button>
+                                                    </td>
+                                                </tr>
+                                            @empty
+                                                <tr class="item-row">
+                                                    <td>
+                                                        @include('admin.components.premium.product-select', [
+                                                            'name' => 'items[0][product_id]',
+                                                            'id' => 'transfer_product_0',
+                                                        ])
+                                                    </td>
+                                                    <td>
+                                                        <input type="number" step="0.0001" min="0.0001" class="users-form-input" name="items[0][quantity]" required>
+                                                    </td>
+                                                    <td>
+                                                        <button type="button" class="users-action-btn users-action-btn--delete remove-row" title="حذف"><i class="fas fa-trash"></i></button>
+                                                    </td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                            <button type="button" class="btn btn-outline-secondary btn-sm mb-3" id="add-item">
-                                <i class="fas fa-plus me-1"></i> إضافة بند
+                            <button type="button" class="users-btn-secondary" id="add-item" style="margin-top: 0.75rem;">
+                                <i class="fas fa-plus"></i> إضافة بند
                             </button>
 
-                            <div class="d-flex gap-2">
-                                <button type="submit" class="btn btn-primary"><i class="fas fa-exchange-alt me-1"></i> تنفيذ التحويل</button>
-                                <a href="{{ route('admin.stock.transfers.index') }}" class="btn btn-secondary">إلغاء</a>
+                            <div class="users-form-actions">
+                                <button type="submit" class="users-btn-submit"><i class="fas fa-exchange-alt"></i> تنفيذ التحويل</button>
+                                <a href="{{ route('admin.stock.transfers.index') }}" class="users-btn-secondary">إلغاء</a>
                             </div>
                         </form>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
-</div>
+@stop
 
-@push('scripts')
-<script>
-(function() {
-    var products = @json($products->map(fn($p) => ['id' => $p->id, 'name' => $p->name])->values());
-    var rowIndex = {{ count(old('items', [])) }};
-    if (rowIndex === 0) rowIndex = 1;
+@section('script')
+    @include('admin.components.premium.product-select-scripts')
+    @include('admin.components.premium.scripts')
+    <script>
+        (function () {
+            var searchUrl = '{{ route('admin.products.search-select') }}';
+            var rowIndex = {{ max(count(old('items', [])), 1) }};
 
-    document.getElementById('add-item')?.addEventListener('click', function() {
-        var tbody = document.querySelector('#items-table tbody');
-        var tr = document.createElement('tr');
-        var options = '<option value="">اختر المنتج</option>' + products.map(function(p) {
-            return '<option value="' + p.id + '">' + p.name + '</option>';
-        }).join('');
-        tr.innerHTML = '<td><select class="form-select form-select-sm" name="items[' + rowIndex + '][product_id]" required>' + options + '</select></td><td><input type="number" step="0.0001" min="0.0001" class="form-control form-control-sm" name="items[' + rowIndex + '][quantity]" required></td><td><button type="button" class="btn btn-sm btn-danger remove-row"><i class="fas fa-trash"></i></button></td>';
-        tbody.appendChild(tr);
-        rowIndex++;
-    });
-    document.getElementById('items-table')?.addEventListener('click', function(e) {
-        if (e.target.closest('.remove-row')) {
-            var row = e.target.closest('tr');
-            if (document.querySelectorAll('#items-table tbody tr').length > 1) row.remove();
-        }
-    });
-})();
-</script>
-@endpush
+            function initRowProductSearch(row) {
+                var select = row.querySelector('.users-product-search');
+                if (!select) {
+                    return;
+                }
+                AdminPremium.initProductSearch({
+                    url: searchUrl,
+                    selector: '#' + select.id,
+                });
+            }
+
+            document.querySelectorAll('#items-table tbody tr').forEach(initRowProductSearch);
+
+            document.getElementById('add-item')?.addEventListener('click', function () {
+                var tbody = document.querySelector('#items-table tbody');
+                var tr = document.createElement('tr');
+                var selectId = 'transfer_product_' + rowIndex;
+                tr.innerHTML =
+                    '<td>' +
+                        '<select name="items[' + rowIndex + '][product_id]" id="' + selectId + '" class="users-form-select users-product-search" data-placeholder="ابحث بالاسم أو الباركود..." required>' +
+                            '<option value=""></option>' +
+                        '</select>' +
+                    '</td>' +
+                    '<td><input type="number" step="0.0001" min="0.0001" class="users-form-input" name="items[' + rowIndex + '][quantity]" required></td>' +
+                    '<td><button type="button" class="users-action-btn users-action-btn--delete remove-row" title="حذف"><i class="fas fa-trash"></i></button></td>';
+                tbody.appendChild(tr);
+                initRowProductSearch(tr);
+                rowIndex++;
+            });
+
+            document.getElementById('items-table')?.addEventListener('click', function (e) {
+                if (e.target.closest('.remove-row')) {
+                    var row = e.target.closest('tr');
+                    if (document.querySelectorAll('#items-table tbody tr').length > 1) {
+                        var select = row.querySelector('.users-product-search');
+                        if (select && jQuery(select).data('select2')) {
+                            jQuery(select).select2('destroy');
+                        }
+                        row.remove();
+                    }
+                }
+            });
+        })();
+    </script>
 @stop

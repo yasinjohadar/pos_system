@@ -1,0 +1,2 @@
+/* @deprecated — استخدم admin-premium.css عبر @include('admin.components.premium.styles') */
+@import url('admin-premium.css');

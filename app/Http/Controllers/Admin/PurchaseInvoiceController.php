@@ -25,6 +25,7 @@ class PurchaseInvoiceController extends Controller
         $this->middleware('permission:purchase-invoice-delete')->only('destroy');
         $this->middleware('permission:purchase-invoice-show')->only('show');
         $this->middleware('permission:purchase-invoice-confirm')->only('confirm');
+        $this->middleware('permission:purchase-invoice-create|purchase-invoice-edit')->only('getProductCost');
     }
 
     public function index(Request $request)
@@ -53,17 +54,28 @@ class PurchaseInvoiceController extends Controller
         $branches = Branch::where('is_active', true)->orderBy('name')->get();
         $suppliers = Supplier::where('is_active', true)->orderBy('name')->get();
 
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.purchases.invoices.partials.table-rows', compact('invoices'))->render(),
+                'pagination' => view('admin.pages.purchases.invoices.partials.pagination', compact('invoices'))->render(),
+            ]);
+        }
+
         return view('admin.pages.purchases.invoices.index', compact('invoices', 'branches', 'suppliers'));
     }
 
     public function create()
     {
         $branches = Branch::where('is_active', true)->orderBy('name')->get();
-        $suppliers = Supplier::where('is_active', true)->orderBy('name')->get();
-        $products = Product::where('is_active', true)->with('unit')->orderBy('name')->get();
         $warehouses = Warehouse::where('is_active', true)->with('branch')->orderBy('name')->get();
+        $selectedSupplier = old('supplier_id') ? Supplier::find(old('supplier_id')) : null;
 
-        return view('admin.pages.purchases.invoices.create', compact('branches', 'suppliers', 'products', 'warehouses'));
+        return view('admin.pages.purchases.invoices.create', [
+            'branches' => $branches,
+            'warehouses' => $warehouses,
+            'selectedSupplier' => $selectedSupplier,
+            'oldProducts' => $this->resolveItemProducts(),
+        ]);
     }
 
     public function store(Request $request)
@@ -139,23 +151,30 @@ class PurchaseInvoiceController extends Controller
 
     public function edit(PurchaseInvoice $purchaseInvoice)
     {
-        if ($purchaseInvoice->status !== PurchaseInvoice::STATUS_DRAFT) {
+        if ($purchaseInvoice->status !== PurchaseInvoice::STATUS_DRAFT && !auth()->user()->can('edit_confirmed_invoice')) {
             return redirect()->route('admin.purchase-invoices.show', $purchaseInvoice)
                 ->with('error', 'لا يمكن تعديل فاتورة معتمدة أو ملغاة.');
         }
 
         $purchaseInvoice->load('items.product');
         $branches = Branch::where('is_active', true)->orderBy('name')->get();
-        $suppliers = Supplier::where('is_active', true)->orderBy('name')->get();
-        $products = Product::where('is_active', true)->with('unit')->orderBy('name')->get();
         $warehouses = Warehouse::where('is_active', true)->with('branch')->orderBy('name')->get();
+        $selectedSupplier = old('supplier_id')
+            ? Supplier::find(old('supplier_id'))
+            : $purchaseInvoice->supplier;
 
-        return view('admin.pages.purchases.invoices.edit', compact('purchaseInvoice', 'branches', 'suppliers', 'products', 'warehouses'));
+        return view('admin.pages.purchases.invoices.edit', [
+            'purchaseInvoice' => $purchaseInvoice,
+            'branches' => $branches,
+            'warehouses' => $warehouses,
+            'selectedSupplier' => $selectedSupplier,
+            'oldProducts' => $this->resolveItemProducts($purchaseInvoice),
+        ]);
     }
 
     public function update(Request $request, PurchaseInvoice $purchaseInvoice)
     {
-        if ($purchaseInvoice->status !== PurchaseInvoice::STATUS_DRAFT) {
+        if ($purchaseInvoice->status !== PurchaseInvoice::STATUS_DRAFT && !auth()->user()->can('edit_confirmed_invoice')) {
             return redirect()->route('admin.purchase-invoices.index')
                 ->with('error', 'لا يمكن تعديل الفاتورة.');
         }
@@ -298,5 +317,35 @@ class PurchaseInvoiceController extends Controller
 
         return redirect()->route('admin.purchase-invoices.show', $purchaseInvoice)
             ->with('success', 'تم حذف الدفعة.');
+    }
+
+    public function getProductCost(Request $request)
+    {
+        $productId = $request->input('product_id');
+        if (!$productId) {
+            return response()->json(['price' => 0]);
+        }
+
+        $product = Product::find($productId);
+        if (!$product) {
+            return response()->json(['price' => 0]);
+        }
+
+        $cost = (float) ($product->cost_price ?: $product->base_price ?: 0);
+
+        return response()->json(['price' => round($cost, 2)]);
+    }
+
+    private function resolveItemProducts(?PurchaseInvoice $purchaseInvoice = null)
+    {
+        $ids = collect(old('items', []))->pluck('product_id')->filter()->unique();
+
+        if ($ids->isEmpty() && $purchaseInvoice) {
+            $ids = $purchaseInvoice->items->pluck('product_id')->unique();
+        }
+
+        return $ids->isNotEmpty()
+            ? Product::whereIn('id', $ids)->get()->keyBy('id')
+            : collect();
     }
 }

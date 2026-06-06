@@ -14,7 +14,7 @@ class PurchaseReturnController extends Controller
     {
         $this->middleware('auth');
         $this->middleware('permission:purchase-return-list')->only('index');
-        $this->middleware('permission:purchase-return-create')->only(['create', 'store']);
+        $this->middleware('permission:purchase-return-create')->only(['create', 'store', 'searchInvoices', 'invoiceReturnData']);
         $this->middleware('permission:purchase-return-show')->only('show');
         $this->middleware('permission:purchase-return-complete')->only('complete');
     }
@@ -37,6 +37,13 @@ class PurchaseReturnController extends Controller
 
         $returns = $query->paginate(15)->withQueryString();
 
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.purchases.returns.partials.table-rows', compact('returns'))->render(),
+                'pagination' => view('admin.pages.purchases.returns.partials.pagination', compact('returns'))->render(),
+            ]);
+        }
+
         return view('admin.pages.purchases.returns.index', compact('returns'));
     }
 
@@ -49,15 +56,68 @@ class PurchaseReturnController extends Controller
                 ->findOrFail($request->input('purchase_invoice_id'));
         }
 
-        $invoices = PurchaseInvoice::where('status', PurchaseInvoice::STATUS_CONFIRMED)
-            ->with('branch')
-            ->orderByDesc('id')
-            ->limit(200)
-            ->get();
-
         $warehouses = \App\Models\Warehouse::where('is_active', true)->with('branch')->orderBy('name')->get();
 
-        return view('admin.pages.purchases.returns.create', compact('purchaseInvoice', 'invoices', 'warehouses'));
+        return view('admin.pages.purchases.returns.create', compact('purchaseInvoice', 'warehouses'));
+    }
+
+    /**
+     * بحث فواتير الشراء المعتمدة لنموذج المرتجع (Select2 AJAX).
+     */
+    public function searchInvoices(Request $request)
+    {
+        $search = trim((string) $request->input('search', $request->input('q', '')));
+
+        $query = PurchaseInvoice::query()
+            ->where('status', PurchaseInvoice::STATUS_CONFIRMED)
+            ->with(['branch', 'supplier'])
+            ->orderByDesc('invoice_date')
+            ->orderByDesc('id');
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('number', 'like', "%{$search}%");
+                if (is_numeric($search)) {
+                    $q->orWhere('id', $search);
+                }
+            });
+        }
+
+        $invoices = $query->limit(25)->get();
+
+        return response()->json([
+            'results' => $invoices->map(fn ($inv) => [
+                'id' => $inv->id,
+                'text' => $inv->number
+                    . ' — ' . ($inv->branch->name ?? '—')
+                    . ' — ' . $inv->invoice_date->format('Y-m-d')
+                    . ($inv->supplier ? ' (' . $inv->supplier->name . ')' : ''),
+            ])->values(),
+        ]);
+    }
+
+    /**
+     * بيانات الفاتورة لملء بنود المرتجع (AJAX).
+     */
+    public function invoiceReturnData(PurchaseInvoice $purchaseInvoice)
+    {
+        if ($purchaseInvoice->status !== PurchaseInvoice::STATUS_CONFIRMED) {
+            return response()->json(['message' => 'الفاتورة غير معتمدة.'], 422);
+        }
+
+        $purchaseInvoice->load(['items.product']);
+
+        return response()->json([
+            'warehouse_id' => $purchaseInvoice->warehouse_id,
+            'invoice_number' => $purchaseInvoice->number,
+            'items' => $purchaseInvoice->items->map(fn ($item) => [
+                'purchase_invoice_item_id' => $item->id,
+                'product_id' => $item->product_id,
+                'product_name' => $item->product->name ?? '—',
+                'quantity_remaining' => (float) $item->quantity_remaining,
+                'unit_price' => (float) $item->unit_price,
+            ])->values(),
+        ]);
     }
 
     public function store(Request $request)

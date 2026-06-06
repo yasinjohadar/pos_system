@@ -32,7 +32,7 @@ class ProductPerformanceService
         }
 
         $rows = $query->get();
-        $products = Product::whereIn('id', $rows->pluck('product_id'))->get()->keyBy('id');
+        $products = Product::whereIn('id', $rows->pluck('product_id'))->with('category')->get()->keyBy('id');
 
         return $rows->map(function ($row) use ($products) {
             $product = $products->get($row->product_id);

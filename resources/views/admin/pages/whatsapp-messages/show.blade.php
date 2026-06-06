@@ -4,107 +4,157 @@
     تفاصيل الرسالة
 @stop
 
-@section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
-            <div class="my-auto">
-                <h5 class="page-title fs-21 mb-1">تفاصيل الرسالة</h5>
-                <nav>
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">الرئيسية</a></li>
-                        <li class="breadcrumb-item"><a href="{{ route('admin.whatsapp-messages.index') }}">رسائل WhatsApp</a></li>
-                        <li class="breadcrumb-item active">تفاصيل الرسالة</li>
-                    </ol>
-                </nav>
-            </div>
-        </div>
+@section('css')
+    @include('admin.components.premium.styles')
+@stop
 
-        <div class="row">
-            <div class="col-lg-8">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">معلومات الرسالة</h5>
-                        @if(in_array($message->status, ['queued', 'failed']))
+@section('content')
+    @php
+        use App\Models\WhatsAppMessage;
+    @endphp
+
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
+
+                @include('admin.components.premium.flash')
+
+                <div class="users-header">
+                    <h5 class="users-page-title">تفاصيل الرسالة #{{ $message->id }}</h5>
+                    <div class="users-header-actions">
+                        @if (in_array($message->status, [WhatsAppMessage::STATUS_QUEUED, WhatsAppMessage::STATUS_FAILED]))
                             <form action="{{ route('admin.whatsapp-messages.retry', $message) }}" method="POST" class="d-inline">
                                 @csrf
-                                <button type="submit" class="btn btn-sm btn-primary" onclick="return confirm('هل تريد إعادة إرسال هذه الرسالة؟')">
-                                    <i class="ri-refresh-line me-1"></i>إعادة المحاولة
+                                <button type="submit" class="users-btn-edit">
+                                    <i class="fas fa-redo"></i>
+                                    إعادة المحاولة
                                 </button>
                             </form>
                         @endif
-                    </div>
-                    <div class="card-body">
-                        <table class="table table-bordered">
-                            <tr>
-                                <th width="200">ID</th>
-                                <td>{{ $message->id }}</td>
-                            </tr>
-                            <tr>
-                                <th>الاتجاه</th>
-                                <td>
-                                    @if($message->direction === 'inbound')
-                                        <span class="badge bg-info">واردة</span>
-                                    @else
-                                        <span class="badge bg-primary">صادرة</span>
-                                    @endif
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>المستقبل</th>
-                                <td>{{ $message->contact->wa_id ?? '-' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Meta Message ID</th>
-                                <td>{{ $message->meta_message_id ?? '-' }}</td>
-                            </tr>
-                            <tr>
-                                <th>النوع</th>
-                                <td>{{ $message->type }}</td>
-                            </tr>
-                            <tr>
-                                <th>الحالة</th>
-                                <td>
-                                    @if($message->status === 'sent')
-                                        <span class="badge bg-success">مرسل</span>
-                                    @elseif($message->status === 'delivered')
-                                        <span class="badge bg-info">مستلم</span>
-                                    @elseif($message->status === 'read')
-                                        <span class="badge bg-primary">مقروء</span>
-                                    @elseif($message->status === 'failed')
-                                        <span class="badge bg-danger">فشل</span>
-                                    @elseif($message->status === 'queued')
-                                        <span class="badge bg-warning">في الانتظار (في الـ Queue)</span>
-                                    @else
-                                        <span class="badge bg-warning">في الانتظار</span>
-                                    @endif
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>الرسالة</th>
-                                <td>{{ $message->body ?? '-' }}</td>
-                            </tr>
-                            <tr>
-                                <th>تاريخ الإنشاء</th>
-                                <td>{{ $message->created_at->format('Y-m-d H:i:s') }}</td>
-                            </tr>
-                            @if($message->error)
-                                <tr>
-                                    <th>خطأ</th>
-                                    <td>
-                                        <pre class="bg-danger text-white p-2 rounded">{{ json_encode($message->error, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
-                                    </td>
-                                </tr>
-                            @endif
-                        </table>
+                        <a href="{{ route('admin.whatsapp-messages.index') }}" class="users-btn-secondary">
+                            <i class="fas fa-arrow-right"></i>
+                            رجوع
+                        </a>
                     </div>
                 </div>
+
+                <div class="users-detail-grid">
+                    <div class="users-detail-card">
+                        <div class="users-detail-card__header">
+                            <h6 class="users-detail-card__title">
+                                <i class="fab fa-whatsapp"></i>
+                                معلومات الرسالة
+                            </h6>
+                        </div>
+                        <div class="users-detail-card__body">
+                            <div class="users-detail-list">
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-exchange-alt"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">الاتجاه</span>
+                                        <div class="users-detail-item__value">
+                                            @if ($message->direction === WhatsAppMessage::DIRECTION_INBOUND)
+                                                <span class="users-badge users-badge--role">واردة</span>
+                                            @else
+                                                <span class="users-badge users-badge--active">صادرة</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-phone"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">المستقبل</span>
+                                        <div class="users-detail-item__value users-color-value">
+                                            {{ $message->contact->wa_id ?? '—' }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-info-circle"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">الحالة</span>
+                                        <div class="users-detail-item__value">
+                                            @if ($message->status === WhatsAppMessage::STATUS_SENT)
+                                                <span class="users-badge users-badge--active">مرسل</span>
+                                            @elseif ($message->status === WhatsAppMessage::STATUS_DELIVERED)
+                                                <span class="users-badge users-badge--role">مستلم</span>
+                                            @elseif ($message->status === WhatsAppMessage::STATUS_READ)
+                                                <span class="users-badge users-badge--role">مقروء</span>
+                                            @elseif ($message->status === WhatsAppMessage::STATUS_FAILED)
+                                                <span class="users-badge users-badge--inactive">فشل</span>
+                                            @elseif ($message->status === WhatsAppMessage::STATUS_QUEUED)
+                                                <span class="users-badge backup-badge--running">في الانتظار</span>
+                                            @else
+                                                <span class="users-badge users-badge--role">{{ $message->status }}</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-tag"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">النوع</span>
+                                        <div class="users-detail-item__value">{{ $message->type }}</div>
+                                    </div>
+                                </div>
+
+                                @if ($message->meta_message_id)
+                                    <div class="users-detail-item">
+                                        <div class="users-detail-item__icon"><i class="fas fa-fingerprint"></i></div>
+                                        <div class="users-detail-item__content">
+                                            <span class="users-detail-item__label">Meta Message ID</span>
+                                            <div class="users-detail-item__value users-color-value">{{ $message->meta_message_id }}</div>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-calendar"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">تاريخ الإنشاء</span>
+                                        <div class="users-detail-item__value">{{ $message->created_at->format('Y-m-d H:i:s') }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="users-detail-card">
+                        <div class="users-detail-card__header">
+                            <h6 class="users-detail-card__title">
+                                <i class="fas fa-comment-dots"></i>
+                                محتوى الرسالة
+                            </h6>
+                        </div>
+                        <div class="users-detail-card__body">
+                            <p class="mb-0" style="white-space: pre-wrap;">{{ $message->body ?? '—' }}</p>
+                        </div>
+                    </div>
+
+                    @if ($message->error)
+                        <div class="users-detail-card">
+                            <div class="users-detail-card__header">
+                                <h6 class="users-detail-card__title">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    تفاصيل الخطأ
+                                </h6>
+                            </div>
+                            <div class="users-detail-card__body">
+                                <pre class="users-color-value mb-0" style="white-space: pre-wrap;">{{ json_encode($message->error, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
             </div>
         </div>
     </div>
-</div>
 @stop
 
-
-
-
+@section('script')
+    @include('admin.components.premium.scripts')
+@stop

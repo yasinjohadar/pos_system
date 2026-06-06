@@ -4,82 +4,219 @@
     تفاصيل المنتج
 @stop
 
-@section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
-            <div class="my-auto">
-                <h5 class="page-title fs-21 mb-1">تفاصيل المنتج: {{ $product->name }}</h5>
-            </div>
-            <div class="d-flex gap-2">
-                @can('product-edit')
-                <a href="{{ route('admin.products.edit', $product) }}" class="btn btn-primary btn-sm">تعديل</a>
-                @endcan
-                <a href="{{ route('admin.products.index') }}" class="btn btn-secondary btn-sm">رجوع</a>
-            </div>
-        </div>
+@section('css')
+    @include('admin.components.premium.styles')
+@stop
 
-        <div class="row">
-            <div class="col-lg-4">
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-body">
-                        @if($product->image && \Illuminate\Support\Facades\Storage::disk('public')->exists($product->image))
-                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="img-fluid rounded mb-3">
-                        @else
-                            <div class="bg-light rounded d-flex align-items-center justify-content-center mb-3" style="height:180px">
-                                <span class="text-muted">لا توجد صورة</span>
-                            </div>
-                        @endif
-                        <table class="table table-borderless mb-0">
-                            <tr><td class="text-muted" width="140">الاسم:</td><td>{{ $product->name }}</td></tr>
-                            <tr><td class="text-muted">الباركود:</td><td>{{ $product->barcode ?? '—' }}</td></tr>
-                            <tr><td class="text-muted">التصنيف:</td><td>{{ $product->category->name ?? '—' }}</td></tr>
-                            <tr><td class="text-muted">الوحدة:</td><td>{{ $product->unit->name ?? '—' }} ({{ $product->unit->symbol ?? '—' }})</td></tr>
-                            <tr><td class="text-muted">السعر الأساسي:</td><td>{{ number_format($product->base_price, 2) }}</td></tr>
-                            <tr><td class="text-muted">سعر التكلفة:</td><td>{{ $product->cost_price !== null ? number_format($product->cost_price, 2) : '—' }}</td></tr>
-                            <tr><td class="text-muted">حد تنبيه المخزون:</td><td>{{ $product->min_stock_alert }}</td></tr>
-                            <tr><td class="text-muted">الحالة:</td>
-                                <td>@if($product->is_active)<span class="badge bg-success">نشط</span>@else<span class="badge bg-danger">غير نشط</span>@endif</td>
-                            </tr>
-                        </table>
-                        @if($product->description)
-                            <p class="mt-2 mb-0"><strong>الوصف:</strong><br>{{ $product->description }}</p>
-                        @endif
+@section('content')
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
+
+                <div class="users-header">
+                    <h5 class="users-page-title">تفاصيل المنتج: {{ $product->name }}</h5>
+                    <div class="users-header-actions">
+                        @can('product-edit')
+                            <a href="{{ route('admin.products.edit', $product) }}" class="users-btn-edit">
+                                <i class="fas fa-edit"></i>
+                                تعديل المنتج
+                            </a>
+                        @endcan
+                        <a href="{{ route('admin.products.index') }}" class="users-btn-secondary">
+                            <i class="fas fa-arrow-right"></i>
+                            رجوع
+                        </a>
                     </div>
                 </div>
-            </div>
-            <div class="col-lg-8">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header"><h6 class="mb-0">أسعار إضافية (حسب الفرع ونوع السعر)</h6></div>
-                    <div class="card-body">
-                        @if($product->prices->count())
-                            <div class="table-responsive">
-                                <table class="table table-bordered mb-0">
-                                    <thead class="table-light">
+
+                <div class="users-detail-grid">
+                    <div class="users-detail-card">
+                        <div class="users-detail-card__header">
+                            <h6 class="users-detail-card__title">
+                                <i class="fas fa-box"></i>
+                                بيانات المنتج
+                            </h6>
+                        </div>
+                        <div class="users-detail-card__body">
+                            <div class="users-detail-profile">
+                                <div class="users-avatar">
+                                    @if ($product->image && \Illuminate\Support\Facades\Storage::disk('public')->exists($product->image))
+                                        <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}">
+                                    @else
+                                        <i class="fas fa-box"></i>
+                                    @endif
+                                </div>
+                                <div>
+                                    <h6 class="users-detail-profile__name">{{ $product->name }}</h6>
+                                    @if ($product->barcode)
+                                        <div class="users-email-cell">
+                                            <span class="users-detail-profile__code" dir="ltr">الباركود: {{ $product->barcode }}</span>
+                                            <button type="button" class="users-copy-btn" data-copy="{{ $product->barcode }}"
+                                                data-copy-message="تم نسخ الباركود"
+                                                title="نسخ الباركود" aria-label="نسخ الباركود">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    @else
+                                        <span class="users-detail-profile__code">بدون باركود</span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div class="users-detail-list">
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-tags"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">التصنيف</span>
+                                        <div class="users-detail-item__value">
+                                            @if ($product->category)
+                                                <a href="{{ route('admin.categories.show', $product->category) }}" class="users-email-link">
+                                                    {{ $product->category->name }}
+                                                </a>
+                                            @else
+                                                <span class="users-muted-text">—</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-ruler-combined"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">الوحدة</span>
+                                        <div class="users-detail-item__value">
+                                            {{ $product->unit->name ?? '—' }}
+                                            @if ($product->unit?->symbol)
+                                                ({{ $product->unit->symbol }})
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-tag"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">السعر الأساسي</span>
+                                        <div class="users-detail-item__value">
+                                            <span class="users-badge users-badge--role">{{ number_format($product->base_price, 2) }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-coins"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">سعر التكلفة</span>
+                                        <div class="users-detail-item__value">
+                                            {{ $product->cost_price !== null ? number_format($product->cost_price, 2) : '—' }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-bell"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">حد تنبيه المخزون</span>
+                                        <div class="users-detail-item__value">{{ $product->min_stock_alert }}</div>
+                                    </div>
+                                </div>
+
+                                @if ($product->description)
+                                    <div class="users-detail-item">
+                                        <div class="users-detail-item__icon"><i class="fas fa-align-right"></i></div>
+                                        <div class="users-detail-item__content">
+                                            <span class="users-detail-item__label">الوصف</span>
+                                            <div class="users-detail-item__value">{{ $product->description }}</div>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-toggle-on"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">الحالة النشطة</span>
+                                        <div class="users-detail-item__value">
+                                            @can('product-edit')
+                                                <label class="users-toggle">
+                                                    <input type="checkbox"
+                                                        class="users-toggle-input"
+                                                        id="product-show-toggle"
+                                                        data-toggle-url="{{ route('admin.products.toggle-status', $product) }}"
+                                                        {{ $product->is_active ? 'checked' : '' }}>
+                                                    <span class="users-toggle-track">
+                                                        <span class="users-toggle-thumb"></span>
+                                                    </span>
+                                                    <span class="users-toggle-label">
+                                                        {{ $product->is_active ? 'نشط' : 'غير نشط' }}
+                                                    </span>
+                                                </label>
+                                            @else
+                                                @if ($product->is_active)
+                                                    <span class="users-badge users-badge--active">نشط</span>
+                                                @else
+                                                    <span class="users-badge users-badge--inactive">غير نشط</span>
+                                                @endif
+                                            @endcan
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="users-table-card">
+                        <div class="users-detail-card__header">
+                            <h6 class="users-detail-card__title">
+                                <i class="fas fa-money-bill-wave"></i>
+                                أسعار إضافية
+                            </h6>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="users-table">
+                                <thead>
+                                    <tr>
+                                        <th>الفرع</th>
+                                        <th>نوع السعر</th>
+                                        <th>القيمة</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($product->prices as $p)
                                         <tr>
-                                            <th>الفرع</th>
-                                            <th>نوع السعر</th>
-                                            <th>القيمة</th>
+                                            <td>{{ $p->branch_id ? $p->branch->name : 'افتراضي (جميع الفروع)' }}</td>
+                                            <td>{{ \App\Models\ProductPrice::PRICE_TYPES[$p->price_type] ?? $p->price_type }}</td>
+                                            <td>
+                                                <span class="users-badge users-badge--role">{{ number_format($p->value, 2) }}</span>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($product->prices as $p)
-                                            <tr>
-                                                <td>{{ $p->branch_id ? $p->branch->name : 'افتراضي (جميع الفروع)' }}</td>
-                                                <td>{{ \App\Models\ProductPrice::PRICE_TYPES[$p->price_type] ?? $p->price_type }}</td>
-                                                <td>{{ number_format($p->value, 2) }}</td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        @else
-                            <p class="mb-0 text-muted">لا توجد أسعار إضافية. يُستخدم السعر الأساسي لجميع الفروع.</p>
-                        @endif
+                                    @empty
+                                        <tr>
+                                            <td colspan="3" class="users-empty">لا توجد أسعار إضافية — يُستخدم السعر الأساسي</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
-</div>
+@stop
+
+@section('script')
+    @include('admin.components.premium.scripts')
+    <script>
+        AdminPremium.initCopyButtons('.users-premium');
+
+        AdminPremium.initDetailToggle({
+            toggleId: 'product-show-toggle',
+            messages: {
+                confirmActive: 'هل أنت متأكد من تفعيل هذا المنتج؟',
+                confirmInactive: 'هل أنت متأكد من إيقاف تفعيل هذا المنتج؟',
+                error: 'حدث خطأ أثناء تحديث حالة المنتج',
+            },
+        });
+    </script>
 @stop

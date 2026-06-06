@@ -4,64 +4,125 @@
     تفاصيل التحويل
 @stop
 
-@section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
-            <div class="my-auto">
-                <h5 class="page-title fs-21 mb-1">تحويل #{{ $transfer->id }}</h5>
-            </div>
-            <div>
-                <a href="{{ route('admin.stock.transfers.index') }}" class="btn btn-secondary btn-sm">رجوع</a>
-            </div>
-        </div>
+@section('css')
+    @include('admin.components.premium.styles')
+@stop
 
-        <div class="row">
-            <div class="col-lg-5">
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-body">
-                        <table class="table table-borderless mb-0">
-                            <tr><td class="text-muted" width="140">التاريخ:</td><td>{{ $transfer->transfer_date->format('Y-m-d') }}</td></tr>
-                            <tr><td class="text-muted">من مخزن:</td><td>{{ $transfer->fromWarehouse->name ?? '—' }}</td></tr>
-                            <tr><td class="text-muted">إلى مخزن:</td><td>{{ $transfer->toWarehouse->name ?? '—' }}</td></tr>
-                            <tr><td class="text-muted">الحالة:</td><td><span class="badge bg-success">{{ $transfer->status }}</span></td></tr>
-                            <tr><td class="text-muted">المستخدم:</td><td>{{ $transfer->user->name ?? '—' }}</td></tr>
-                            @if($transfer->notes)
-                                <tr><td class="text-muted">ملاحظات:</td><td>{{ $transfer->notes }}</td></tr>
-                            @endif
-                        </table>
-                    </div>
+@section('content')
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
+
+                <div class="users-header">
+                    <h5 class="users-page-title">تحويل #{{ $transfer->id }}</h5>
+                    <a href="{{ route('admin.stock.transfers.index') }}" class="users-btn-secondary">
+                        <i class="fas fa-arrow-right"></i> رجوع
+                    </a>
                 </div>
-            </div>
-            <div class="col-lg-7">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header"><h6 class="mb-0">البنود</h6></div>
-                    <div class="card-body">
-                        @php
-                            $items = $transfer->movements->where('type', 'transfer_out')->groupBy('product_id');
-                        @endphp
-                        <div class="table-responsive">
-                            <table class="table table-bordered mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>المنتج</th>
-                                        <th>الكمية</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($items as $productId => $movements)
+
+                <div class="users-detail-grid">
+                    <div class="users-detail-card">
+                        <div class="users-detail-card__header">
+                            <h6 class="users-detail-card__title"><i class="fas fa-info-circle"></i> معلومات التحويل</h6>
+                        </div>
+                        <div class="users-detail-card__body">
+                            <div class="users-detail-list">
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-calendar"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">التاريخ</span>
+                                        <div class="users-detail-item__value">{{ $transfer->transfer_date->format('Y-m-d') }}</div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-warehouse"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">من مخزن</span>
+                                        <div class="users-detail-item__value">{{ $transfer->fromWarehouse->name ?? '—' }}</div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-warehouse"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">إلى مخزن</span>
+                                        <div class="users-detail-item__value">{{ $transfer->toWarehouse->name ?? '—' }}</div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-flag"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">الحالة</span>
+                                        <div class="users-detail-item__value">
+                                            @if ($transfer->status === 'completed')
+                                                <span class="users-badge users-badge--active">مكتمل</span>
+                                            @else
+                                                <span class="users-badge users-badge--role">{{ $transfer->status }}</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-user"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">المستخدم</span>
+                                        <div class="users-detail-item__value">{{ $transfer->user->name ?? '—' }}</div>
+                                    </div>
+                                </div>
+                                @if ($transfer->notes)
+                                    <div class="users-detail-item">
+                                        <div class="users-detail-item__icon"><i class="fas fa-sticky-note"></i></div>
+                                        <div class="users-detail-item__content">
+                                            <span class="users-detail-item__label">ملاحظات</span>
+                                            <div class="users-detail-item__value">{{ $transfer->notes }}</div>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="users-detail-card">
+                        <div class="users-detail-card__header">
+                            <h6 class="users-detail-card__title"><i class="fas fa-list"></i> بنود التحويل</h6>
+                        </div>
+                        <div class="users-table-card" style="border: none; box-shadow: none;">
+                            @php
+                                $items = $transfer->movements->where('type', 'transfer_out')->groupBy('product_id');
+                            @endphp
+                            <div class="table-responsive">
+                                <table class="users-table">
+                                    <thead>
                                         <tr>
-                                            <td>{{ $movements->first()->product->name ?? $productId }}</td>
-                                            <td>{{ number_format(abs($movements->sum('quantity')), 2) }}</td>
+                                            <th>المنتج</th>
+                                            <th>الكمية</th>
                                         </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($items as $productId => $movements)
+                                            <tr>
+                                                <td>
+                                                    <div class="users-user-cell">
+                                                        <div class="users-avatar"><i class="fas fa-box"></i></div>
+                                                        <span class="users-user-name" style="cursor: default;">{{ $movements->first()->product->name ?? $productId }}</span>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span class="users-badge users-badge--role">{{ number_format(abs($movements->sum('quantity')), 2) }}</span>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="2" class="users-empty">لا توجد بنود</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
-</div>
 @stop

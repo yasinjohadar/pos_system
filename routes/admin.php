@@ -54,6 +54,17 @@ use App\Http\Controllers\Admin\AttachmentController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\ChartOfAccountController;
 use App\Http\Controllers\Admin\JournalEntryController;
+use App\Http\Controllers\Admin\CompanySettingsController;
+use App\Http\Controllers\Admin\TaxController;
+use App\Http\Controllers\Admin\BankReconciliationController;
+use App\Http\Controllers\Admin\PosController;
+use App\Http\Controllers\Admin\SalesQuoteController;
+use App\Http\Controllers\Admin\PurchaseOrderController;
+use App\Http\Controllers\Admin\ProductBatchController;
+use App\Http\Controllers\Admin\Reports\GeneralLedgerController;
+use App\Http\Controllers\Admin\Reports\AccountStatementController;
+use App\Http\Controllers\Admin\Reports\BalanceSheetController;
+use App\Http\Controllers\Admin\Reports\CashFlowController;
 
 /*
 |--------------------------------------------------------------------------
@@ -69,12 +80,18 @@ use App\Http\Controllers\Admin\JournalEntryController;
 Route::middleware(['auth', 'check.user.active'])->prefix('admin')->name('admin.')->group(function () {
     // الفروع والمخازن
     Route::resource('branches', BranchController::class);
+    Route::post('branches/{branch}/toggle-status', [BranchController::class, 'toggleStatus'])->name('branches.toggle-status');
+    Route::post('warehouses/{warehouse}/toggle-status', [WarehouseController::class, 'toggleStatus'])->name('warehouses.toggle-status');
     Route::resource('warehouses', WarehouseController::class);
 
     // التصنيفات والوحدات والمنتجات
+    Route::post('categories/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])->name('categories.toggle-status');
     Route::resource('categories', CategoryController::class);
+    Route::post('units/{unit}/toggle-status', [UnitController::class, 'toggleStatus'])->name('units.toggle-status');
     Route::resource('units', UnitController::class);
+    Route::post('products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
     Route::get('products/search-by-barcode', [ProductController::class, 'searchByBarcode'])->name('products.search-by-barcode');
+    Route::get('products/search-select', [ProductController::class, 'searchSelect'])->name('products.search-select');
     Route::post('products/{product}/barcodes', [ProductController::class, 'storeBarcode'])->name('products.barcodes.store');
     Route::delete('product-barcodes/{productBarcode}', [ProductController::class, 'destroyBarcode'])->name('product-barcodes.destroy');
     Route::resource('products', ProductController::class);
@@ -116,10 +133,15 @@ Route::middleware(['auth', 'check.user.active'])->prefix('admin')->name('admin.'
         Route::get('segments', [SegmentReportController::class, 'index'])->name('segments.index');
         Route::get('trial-balance', [TrialBalanceController::class, 'index'])->name('trial-balance.index');
         Route::get('income-statement', [IncomeStatementController::class, 'index'])->name('income-statement.index');
+        Route::get('general-ledger', [GeneralLedgerController::class, 'index'])->name('general-ledger.index');
+        Route::get('account-statement', [AccountStatementController::class, 'index'])->name('account-statement.index');
+        Route::get('balance-sheet', [BalanceSheetController::class, 'index'])->name('balance-sheet.index');
+        Route::get('cash-flow', [CashFlowController::class, 'index'])->name('cash-flow.index');
     });
 
     // المبيعات
     Route::resource('payment-methods', PaymentMethodController::class)->except(['show']);
+    Route::get('customers/search-select', [CustomerController::class, 'searchSelect'])->name('customers.search-select');
     Route::get('customers/{customer}/statement', [CustomerController::class, 'statement'])->name('customers.statement');
     Route::resource('customers', CustomerController::class);
     Route::get('sale-invoices/product-price', [SaleInvoiceController::class, 'getProductPrice'])->name('sale-invoices.product-price');
@@ -142,10 +164,13 @@ Route::middleware(['auth', 'check.user.active'])->prefix('admin')->name('admin.'
         'destroy' => 'sale-invoices.destroy',
     ]);
     Route::get('sale-invoices/{saleInvoice}/print', [SaleInvoiceController::class, 'print'])->name('sale-invoices.print');
+    Route::get('sale-invoices/{saleInvoice}/e-invoice', [SaleInvoiceController::class, 'exportEInvoice'])->name('sale-invoices.e-invoice');
     Route::post('sale-invoices/{saleInvoice}/confirm', [SaleInvoiceController::class, 'confirm'])->name('sale-invoices.confirm');
     Route::post('sale-invoices/{saleInvoice}/redeem-points', [SaleInvoiceController::class, 'redeemPoints'])->name('sale-invoices.redeem-points');
     Route::post('sale-invoices/{saleInvoice}/payments', [SaleInvoiceController::class, 'addPayment'])->name('sale-invoices.payments.store');
     Route::delete('sale-invoices/{saleInvoice}/payments/{payment}', [SaleInvoiceController::class, 'destroyPayment'])->name('sale-invoices.payments.destroy');
+    Route::get('sale-returns/search-invoices', [SaleReturnController::class, 'searchInvoices'])->name('sale-returns.search-invoices');
+    Route::get('sale-returns/invoice-data/{saleInvoice}', [SaleReturnController::class, 'invoiceReturnData'])->name('sale-returns.invoice-data');
     Route::resource('sale-returns', SaleReturnController::class)->only(['index', 'create', 'store', 'show'])->names([
         'index' => 'sale-returns.index',
         'create' => 'sale-returns.create',
@@ -178,6 +203,22 @@ Route::middleware(['auth', 'check.user.active'])->prefix('admin')->name('admin.'
     Route::get('cash-vouchers', [CashVoucherController::class, 'index'])->name('cash-vouchers.index');
     Route::get('cash-vouchers/create', [CashVoucherController::class, 'create'])->name('cash-vouchers.create');
     Route::post('cash-vouchers', [CashVoucherController::class, 'store'])->name('cash-vouchers.store');
+    Route::get('cash-vouchers/{cashVoucher}', [CashVoucherController::class, 'show'])->name('cash-vouchers.show');
+    Route::get('cash-vouchers/{cashVoucher}/print', [CashVoucherController::class, 'print'])->name('cash-vouchers.print');
+    Route::post('cash-vouchers/{cashVoucher}/cancel', [CashVoucherController::class, 'cancel'])->name('cash-vouchers.cancel');
+
+    Route::get('settings/company', [CompanySettingsController::class, 'index'])->name('settings.company.index');
+    Route::put('settings/company', [CompanySettingsController::class, 'update'])->name('settings.company.update');
+
+    Route::resource('taxes', TaxController::class)->except(['show']);
+
+    Route::get('bank-reconciliations', [BankReconciliationController::class, 'index'])->name('bank-reconciliations.index');
+    Route::get('bank-reconciliations/create', [BankReconciliationController::class, 'create'])->name('bank-reconciliations.create');
+    Route::post('bank-reconciliations', [BankReconciliationController::class, 'store'])->name('bank-reconciliations.store');
+    Route::get('bank-reconciliations/{bankReconciliation}', [BankReconciliationController::class, 'show'])->name('bank-reconciliations.show');
+    Route::post('bank-reconciliations/{bankReconciliation}/items', [BankReconciliationController::class, 'addItem'])->name('bank-reconciliations.items.store');
+    Route::post('bank-reconciliations/{bankReconciliation}/items/{item}/toggle', [BankReconciliationController::class, 'toggleItem'])->name('bank-reconciliations.items.toggle');
+    Route::post('bank-reconciliations/{bankReconciliation}/finalize', [BankReconciliationController::class, 'finalize'])->name('bank-reconciliations.finalize');
 
     Route::get('fiscal-years', [FiscalYearController::class, 'index'])->name('fiscal-years.index');
     Route::get('fiscal-years/create', [FiscalYearController::class, 'create'])->name('fiscal-years.create');
@@ -185,8 +226,10 @@ Route::middleware(['auth', 'check.user.active'])->prefix('admin')->name('admin.'
     Route::post('fiscal-years/{fiscalYear}/close', [FiscalYearController::class, 'close'])->name('fiscal-years.close');
 
     // المشتريات
+    Route::get('suppliers/search-select', [SupplierController::class, 'searchSelect'])->name('suppliers.search-select');
     Route::get('suppliers/{supplier}/statement', [SupplierController::class, 'statement'])->name('suppliers.statement');
     Route::resource('suppliers', SupplierController::class);
+    Route::get('purchase-invoices/product-cost', [PurchaseInvoiceController::class, 'getProductCost'])->name('purchase-invoices.product-cost');
     Route::resource('purchase-invoices', PurchaseInvoiceController::class)->names([
         'index' => 'purchase-invoices.index',
         'create' => 'purchase-invoices.create',
@@ -199,6 +242,8 @@ Route::middleware(['auth', 'check.user.active'])->prefix('admin')->name('admin.'
     Route::post('purchase-invoices/{purchaseInvoice}/confirm', [PurchaseInvoiceController::class, 'confirm'])->name('purchase-invoices.confirm');
     Route::post('purchase-invoices/{purchaseInvoice}/payments', [PurchaseInvoiceController::class, 'addPayment'])->name('purchase-invoices.payments.store');
     Route::delete('purchase-invoices/{purchaseInvoice}/payments/{payment}', [PurchaseInvoiceController::class, 'destroyPayment'])->name('purchase-invoices.payments.destroy');
+    Route::get('purchase-returns/search-invoices', [PurchaseReturnController::class, 'searchInvoices'])->name('purchase-returns.search-invoices');
+    Route::get('purchase-returns/invoice-data/{purchaseInvoice}', [PurchaseReturnController::class, 'invoiceReturnData'])->name('purchase-returns.invoice-data');
     Route::resource('purchase-returns', PurchaseReturnController::class)->only(['index', 'create', 'store', 'show'])->names([
         'index' => 'purchase-returns.index',
         'create' => 'purchase-returns.create',
@@ -207,13 +252,34 @@ Route::middleware(['auth', 'check.user.active'])->prefix('admin')->name('admin.'
     ]);
     Route::post('purchase-returns/{purchaseReturn}/complete', [PurchaseReturnController::class, 'complete'])->name('purchase-returns.complete');
 
+    Route::get('pos', [PosController::class, 'index'])->name('pos.index');
+    Route::post('pos/shift/open', [PosController::class, 'openShift'])->name('pos.shift.open');
+    Route::post('pos/shift/close', [PosController::class, 'closeShift'])->name('pos.shift.close');
+    Route::get('pos/search-product', [PosController::class, 'searchProduct'])->name('pos.search-product');
+    Route::post('pos/hold', [PosController::class, 'hold'])->name('pos.hold');
+    Route::get('pos/held/{heldSale}', [PosController::class, 'resume'])->name('pos.held.resume');
+    Route::post('pos/checkout', [PosController::class, 'checkout'])->name('pos.checkout');
+
+    Route::resource('sales-quotes', SalesQuoteController::class)->only(['index', 'create', 'store', 'show']);
+    Route::post('sales-quotes/{salesQuote}/convert', [SalesQuoteController::class, 'convert'])->name('sales-quotes.convert');
+
+    Route::resource('purchase-orders', PurchaseOrderController::class)->only(['index', 'create', 'store', 'show']);
+    Route::post('purchase-orders/{purchaseOrder}/convert', [PurchaseOrderController::class, 'convert'])->name('purchase-orders.convert');
+
+    Route::resource('product-batches', ProductBatchController::class)->except(['show', 'destroy']);
+
     Route::post('attachments', [AttachmentController::class, 'store'])->name('attachments.store');
     Route::delete('attachments/{attachment}', [AttachmentController::class, 'destroy'])->name('attachments.destroy');
 
     Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+    Route::get('audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit-logs.show');
     Route::resource('chart-of-accounts', ChartOfAccountController::class)->except(['show']);
     Route::get('journal-entries', [JournalEntryController::class, 'index'])->name('journal-entries.index');
+    Route::get('journal-entries/create', [JournalEntryController::class, 'create'])->name('journal-entries.create');
+    Route::post('journal-entries', [JournalEntryController::class, 'store'])->name('journal-entries.store');
     Route::get('journal-entries/{journalEntry}', [JournalEntryController::class, 'show'])->name('journal-entries.show');
+    Route::post('journal-entries/{journalEntry}/post', [JournalEntryController::class, 'post'])->name('journal-entries.post');
+    Route::post('journal-entries/{journalEntry}/reverse', [JournalEntryController::class, 'reverse'])->name('journal-entries.reverse');
     Route::get('attachments', [AttachmentController::class, 'index'])->name('attachments.index');
 
     // ========== Email Settings Routes ==========

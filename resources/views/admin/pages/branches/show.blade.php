@@ -4,94 +4,167 @@
     تفاصيل الفرع
 @stop
 
+@section('css')
+    @include('admin.components.premium.styles')
+@stop
+
 @section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
-            <div class="my-auto">
-                <h5 class="page-title fs-21 mb-1">تفاصيل الفرع: {{ $branch->name }}</h5>
-            </div>
-            <div class="d-flex gap-2">
-                @can('warehouse-create')
-                <a href="{{ route('admin.warehouses.create', ['branch_id' => $branch->id]) }}" class="btn btn-success btn-sm">
-                    <i class="fas fa-warehouse me-1"></i> إضافة مخزن
-                </a>
-                @endcan
-                @can('branch-edit')
-                <a href="{{ route('admin.branches.edit', $branch) }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-edit me-1"></i> تعديل الفرع
-                </a>
-                @endcan
-                <a href="{{ route('admin.branches.index') }}" class="btn btn-secondary btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i> رجوع
-                </a>
-            </div>
-        </div>
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
 
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-
-        <div class="row">
-            <div class="col-lg-5">
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header">
-                        <h6 class="mb-0">بيانات الفرع</h6>
+                @if (session('success'))
+                    <div class="alert alert-success alert-dismissible fade show">
+                        <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
-                    <div class="card-body">
-                        <table class="table table-borderless mb-0">
-                            <tr>
-                                <td class="text-muted" width="140">الاسم:</td>
-                                <td>{{ $branch->name }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">الكود:</td>
-                                <td>{{ $branch->code ?? '—' }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">الهاتف:</td>
-                                <td>{{ $branch->phone ?? '—' }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">البريد:</td>
-                                <td>{{ $branch->email ?? '—' }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">العنوان:</td>
-                                <td>{{ $branch->address ?? '—' }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">الحالة:</td>
-                                <td>
-                                    @if($branch->is_active)
-                                        <span class="badge bg-success">نشط</span>
-                                    @else
-                                        <span class="badge bg-danger">غير نشط</span>
-                                    @endif
-                                </td>
-                            </tr>
-                        </table>
+                @endif
+
+                <div class="users-header">
+                    <h5 class="users-page-title">تفاصيل الفرع: {{ $branch->name }}</h5>
+                    <div class="users-header-actions">
+                        @can('warehouse-create')
+                            <a href="{{ route('admin.warehouses.create', ['branch_id' => $branch->id]) }}" class="users-btn-success">
+                                <i class="fas fa-warehouse"></i>
+                                إضافة مخزن
+                            </a>
+                        @endcan
+                        @can('branch-edit')
+                            <a href="{{ route('admin.branches.edit', $branch) }}" class="users-btn-edit">
+                                <i class="fas fa-edit"></i>
+                                تعديل الفرع
+                            </a>
+                        @endcan
+                        <a href="{{ route('admin.branches.index') }}" class="users-btn-secondary">
+                            <i class="fas fa-arrow-right"></i>
+                            رجوع
+                        </a>
                     </div>
                 </div>
-            </div>
 
-            <div class="col-lg-7">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0">المخازن المرتبطة بالفرع</h6>
-                        @can('warehouse-create')
-                        <a href="{{ route('admin.warehouses.create', ['branch_id' => $branch->id]) }}" class="btn btn-sm btn-success">إضافة مخزن</a>
-                        @endcan
+                <div class="users-detail-grid">
+                    <div class="users-detail-card">
+                        <div class="users-detail-card__header">
+                            <h6 class="users-detail-card__title">
+                                <i class="fas fa-building"></i>
+                                بيانات الفرع
+                            </h6>
+                        </div>
+                        <div class="users-detail-card__body">
+                            <div class="users-detail-profile">
+                                <div class="users-avatar">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                                <div>
+                                    <h6 class="users-detail-profile__name">{{ $branch->name }}</h6>
+                                    <span class="users-detail-profile__code">
+                                        {{ $branch->code ? 'الكود: ' . $branch->code : 'بدون كود' }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="users-detail-list">
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-phone"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">الهاتف</span>
+                                        <div class="users-detail-item__value">
+                                            @if ($branch->phone)
+                                                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $branch->phone) }}"
+                                                    target="_blank" class="users-phone-cell" title="فتح WhatsApp">
+                                                    <i class="fab fa-whatsapp"></i>
+                                                    <span>{{ $branch->phone }}</span>
+                                                </a>
+                                            @else
+                                                <span class="users-muted-text">—</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-envelope"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">البريد</span>
+                                        <div class="users-detail-item__value">
+                                            @if ($branch->email)
+                                                <div class="users-email-cell">
+                                                    <a href="mailto:{{ $branch->email }}" class="users-email-link">
+                                                        {{ $branch->email }}
+                                                    </a>
+                                                    <button type="button" class="users-copy-btn" data-copy="{{ $branch->email }}"
+                                                        title="نسخ البريد">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                </div>
+                                            @else
+                                                <span class="users-muted-text">—</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-map-marker-alt"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">العنوان</span>
+                                        <div class="users-detail-item__value">
+                                            {{ $branch->address ?? '—' }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-toggle-on"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">الحالة النشطة</span>
+                                        <div class="users-detail-item__value">
+                                            @can('branch-edit')
+                                                <label class="users-toggle">
+                                                    <input type="checkbox"
+                                                        class="users-toggle-input"
+                                                        id="branch-show-toggle"
+                                                        data-toggle-url="{{ route('admin.branches.toggle-status', $branch) }}"
+                                                        {{ $branch->is_active ? 'checked' : '' }}>
+                                                    <span class="users-toggle-track">
+                                                        <span class="users-toggle-thumb"></span>
+                                                    </span>
+                                                    <span class="users-toggle-label">
+                                                        {{ $branch->is_active ? 'نشط' : 'غير نشط' }}
+                                                    </span>
+                                                </label>
+                                            @else
+                                                @if ($branch->is_active)
+                                                    <span class="users-badge users-badge--active">نشط</span>
+                                                @else
+                                                    <span class="users-badge users-badge--inactive">غير نشط</span>
+                                                @endif
+                                            @endcan
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
+
+                    <div class="users-table-card">
+                        <div class="users-detail-card__header">
+                            <h6 class="users-detail-card__title">
+                                <i class="fas fa-warehouse"></i>
+                                المخازن المرتبطة بالفرع
+                            </h6>
+                            @can('warehouse-create')
+                                <a href="{{ route('admin.warehouses.create', ['branch_id' => $branch->id]) }}" class="users-btn-success" style="padding: 0.375rem 0.875rem; font-size: 0.8125rem;">
+                                    <i class="fas fa-plus"></i>
+                                    إضافة مخزن
+                                </a>
+                            @endcan
+                        </div>
                         <div class="table-responsive">
-                            <table class="table table-striped table-bordered mb-0">
-                                <thead class="table-light">
+                            <table class="users-table">
+                                <thead>
                                     <tr>
-                                        <th>#</th>
+                                        <th style="width: 50px;">#</th>
                                         <th>اسم المخزن</th>
                                         <th>الكود</th>
                                         <th>افتراضي</th>
@@ -100,41 +173,65 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse($branch->warehouses as $warehouse)
+                                    @forelse ($branch->warehouses as $warehouse)
                                         <tr>
-                                            <td>{{ $warehouse->id }}</td>
-                                            <td>{{ $warehouse->name }}</td>
-                                            <td>{{ $warehouse->code ?? '—' }}</td>
+                                            <th scope="row" class="users-row-index">{{ $loop->iteration }}</th>
                                             <td>
-                                                @if($warehouse->is_default)
-                                                    <span class="badge bg-primary">افتراضي</span>
+                                                <div class="users-user-cell">
+                                                    <div class="users-avatar" style="width: 34px; height: 34px; font-size: 0.75rem;">
+                                                        <i class="fas fa-boxes-stacked"></i>
+                                                    </div>
+                                                    <span class="users-user-name" style="cursor: default;">{{ $warehouse->name }}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if ($warehouse->code)
+                                                    <span class="users-badge users-badge--role">{{ $warehouse->code }}</span>
                                                 @else
-                                                    —
+                                                    <span class="users-muted-text">—</span>
                                                 @endif
                                             </td>
                                             <td>
-                                                @if($warehouse->is_active)
-                                                    <span class="badge bg-success">نشط</span>
+                                                @if ($warehouse->is_default)
+                                                    <span class="users-badge users-badge--role">افتراضي</span>
                                                 @else
-                                                    <span class="badge bg-danger">غير نشط</span>
+                                                    <span class="users-muted-text">—</span>
                                                 @endif
                                             </td>
                                             <td>
-                                                @can('warehouse-edit')
-                                                <a href="{{ route('admin.warehouses.edit', $warehouse) }}" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></a>
-                                                @endcan
-                                                @can('warehouse-delete')
-                                                <form action="{{ route('admin.warehouses.destroy', $warehouse) }}" method="POST" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا المخزن؟');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
-                                                </form>
-                                                @endcan
+                                                @if ($warehouse->is_active)
+                                                    <span class="users-badge users-badge--active">نشط</span>
+                                                @else
+                                                    <span class="users-badge users-badge--inactive">غير نشط</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <div class="users-actions">
+                                                    @can('warehouse-edit')
+                                                        <a class="users-action-btn users-action-btn--edit"
+                                                            href="{{ route('admin.warehouses.edit', $warehouse) }}"
+                                                            title="تعديل المخزن">
+                                                            <i class="fa-solid fa-pen-to-square"></i>
+                                                        </a>
+                                                    @endcan
+                                                    @can('warehouse-delete')
+                                                        <button type="button" class="users-action-btn users-action-btn--delete"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#deleteConfirmModal"
+                                                            data-delete-action="{{ route('admin.warehouses.destroy', $warehouse) }}"
+                                                            data-delete-title="حذف المخزن"
+                                                            data-delete-message="هل أنت متأكد من حذف هذا المخزن؟"
+                                                            data-delete-item="{{ $warehouse->name }}"
+                                                            title="حذف المخزن">
+                                                            <i class="fa-solid fa-trash-can"></i>
+                                                        </button>
+                                                    @endcan
+                                                </div>
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="6" class="text-center">لا توجد مخازن لهذا الفرع.</td>
+                                            <td colspan="6" class="users-empty">لا توجد مخازن لهذا الفرع</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -142,8 +239,25 @@
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
-</div>
+
+    @include('admin.components.delete-confirm-modal')
+@stop
+
+@section('script')
+    @include('admin.components.premium.scripts')
+    <script>
+        AdminPremium.initDetailToggle({
+            toggleId: 'branch-show-toggle',
+            messages: {
+                confirmActive: 'هل أنت متأكد من تفعيل هذا الفرع؟',
+                confirmInactive: 'هل أنت متأكد من إيقاف تفعيل هذا الفرع؟',
+                error: 'حدث خطأ أثناء تحديث حالة الفرع',
+            },
+        });
+        AdminPremium.initCopyButtons('.users-premium');
+    </script>
 @stop

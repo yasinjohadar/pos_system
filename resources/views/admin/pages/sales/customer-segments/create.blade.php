@@ -4,51 +4,55 @@
     إضافة شريحة عملاء
 @stop
 
-@section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center my-4">
-            <h4 class="mb-0">إضافة شريحة عملاء</h4>
-            <a href="{{ route('admin.customer-segments.index') }}" class="btn btn-secondary">رجوع لشرائح العملاء</a>
-        </div>
+@section('css')
+    @include('admin.components.premium.styles')
+@stop
 
-        <div class="card">
-            <div class="card-body">
-                <form action="{{ route('admin.customer-segments.store') }}" method="POST">
-                    @csrf
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">الاسم (عربي)</label>
-                            <input type="text" name="name" value="{{ old('name') }}" class="form-control @error('name') is-invalid @enderror" required>
-                            @error('name')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">الاسم (إنجليزي)</label>
-                            <input type="text" name="name_en" value="{{ old('name_en') }}" class="form-control">
-                        </div>
+@section('content')
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
+
+                <div class="users-header">
+                    <h5 class="users-page-title">إضافة شريحة عملاء</h5>
+                    <a href="{{ route('admin.customer-segments.index') }}" class="users-btn-secondary">
+                        <i class="fas fa-arrow-right"></i> رجوع
+                    </a>
+                </div>
+
+                @include('admin.components.premium.flash')
+
+                @if ($errors->any())
+                    <div class="alert alert-danger alert-dismissible fade show">
+                        <ul class="mb-0">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">الوصف</label>
-                        <textarea name="description" class="form-control" rows="2">{{ old('description') }}</textarea>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label">اللون</label>
-                            <input type="color" name="color" value="{{ old('color', '#6366f1') }}" class="form-control form-control-color" style="height: 38px;">
-                        </div>
-                        <div class="col-md-4 d-flex align-items-end">
-                            <div class="form-check mb-3">
-                                <input type="checkbox" name="is_active" id="is_active" class="form-check-input" value="1" {{ old('is_active', true) ? 'checked' : '' }}>
-                                <label class="form-check-label" for="is_active">نشط</label>
-                            </div>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">حفظ</button>
-                </form>
+                @endif
+
+                @include('admin.pages.sales.customer-segments.partials.form', [
+                    'action' => route('admin.customer-segments.store'),
+                    'submitLabel' => 'حفظ الشريحة',
+                ])
+
             </div>
         </div>
     </div>
-</div>
+@stop
+
+@section('script')
+    @include('admin.components.premium.scripts')
+    <script>
+        (function () {
+            AdminPremium.initFormToggles();
+            var colorInput = document.getElementById('color');
+            var preview = document.getElementById('color-preview');
+            var valueEl = document.getElementById('color-value');
+            if (colorInput) {
+                colorInput.addEventListener('input', function () {
+                    preview.style.background = this.value;
+                    valueEl.textContent = this.value;
+                });
+            }
+        })();
+    </script>
 @stop

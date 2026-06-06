@@ -162,19 +162,25 @@
                                                     href="{{ route('users.edit', $user->id) }}">
                                                     <i class="fa-solid fa-pen-to-square"></i> تعديل
                                                 </a>
-                                                <a class="btn btn-danger btn-sm me-1" data-bs-toggle="modal"
-                                                    data-bs-target="#delete{{ $user->id }}">
+                                                <button type="button" class="btn btn-danger btn-sm me-1"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteConfirmModal"
+                                                    data-delete-action="{{ route('users.destroy', $user->id) }}"
+                                                    data-delete-title="حذف المستخدم"
+                                                    data-delete-message="هل أنت متأكد من حذف هذا المستخدم؟"
+                                                    data-delete-item="{{ $user->name }}">
                                                     <i class="fa-solid fa-trash-can"></i> حذف
-                                                </a>
-                                                <a href="#" class="btn btn-warning btn-sm" data-bs-toggle="modal"
-                                                    data-bs-target="#change_password{{$user->id}}">
+                                                </button>
+                                                <button type="button" class="btn btn-warning btn-sm"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#changePasswordModal"
+                                                    data-password-action="{{ route('users.update-password', $user->id) }}"
+                                                    data-password-user="{{ $user->name }}">
                                                     <i class="fa-solid fa-key"></i> تعديل كلمة السر
-                                                </a>
+                                                </button>
                                             </td>
                                         </tr>
 
-                                        @include('admin.pages.users.delete')
-                                        @include('admin.pages.users.change_password')
                                     @empty
                                         <tr>
                                             <td colspan="8" class="text-center text-danger fw-bold">لا توجد بيانات متاحة
@@ -203,6 +209,8 @@
     <!-- end col -->
     </div>
 
+    @include('admin.components.delete-confirm-modal')
+    @include('admin.components.password-change-modal')
 @stop
 
 

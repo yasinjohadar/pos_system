@@ -33,13 +33,23 @@ class LoyaltyController extends Controller
 
         $customers = Customer::orderBy('name')->get(['id', 'name']);
 
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.sales.loyalty.partials.table-rows', compact('transactions'))->render(),
+                'pagination' => view('admin.pages.sales.loyalty.partials.pagination', compact('transactions'))->render(),
+            ]);
+        }
+
         return view('admin.pages.sales.loyalty.index', compact('transactions', 'customers'));
     }
 
     public function adjustForm()
     {
-        $customers = Customer::orderBy('name')->get(['id', 'name', 'loyalty_points']);
-        return view('admin.pages.sales.loyalty.adjust', compact('customers'));
+        $selectedCustomer = old('customer_id')
+            ? Customer::find(old('customer_id'))
+            : null;
+
+        return view('admin.pages.sales.loyalty.adjust', compact('selectedCustomer'));
     }
 
     public function adjust(Request $request, LoyaltyService $loyaltyService)

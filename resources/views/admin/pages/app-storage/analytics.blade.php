@@ -4,109 +4,153 @@
     تحليلات التخزين
 @stop
 
+@section('css')
+    @include('admin.components.premium.styles')
+@stop
+
 @section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
-            <div class="my-auto">
-                <h5 class="page-title fs-21 mb-1">تحليلات التخزين</h5>
-            </div>
-            <div>
-                <a href="{{ route('admin.storage.index') }}" class="btn btn-secondary btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i> رجوع
-                </a>
-            </div>
-        </div>
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
 
-        @if(isset($budgetAlert) && $budgetAlert)
-            <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                <strong>تنبيه!</strong> {{ $budgetAlert['message'] }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
+                @if (isset($budgetAlert) && $budgetAlert)
+                    <div class="email-form-alert email-form-alert--warning mb-3">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span><strong>تنبيه:</strong> {{ $budgetAlert['message'] }}</span>
+                    </div>
+                @endif
 
-        <div class="row">
-            <div class="col-12">
-                <div class="card shadow-sm border-0">
-                    <div class="card-body">
-                        <form method="GET" action="{{ route('admin.storage.analytics') }}" class="mb-4">
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <label class="form-label">مكان التخزين</label>
-                                    <select name="config_id" class="form-select" required>
-                                        <option value="">اختر مكان التخزين</option>
-                                        @foreach($configs as $config)
-                                            <option value="{{ $config->id }}" {{ request('config_id') == $config->id ? 'selected' : '' }}>
-                                                {{ $config->name }} ({{ App\Models\AppStorageConfig::DRIVERS[$config->driver] ?? $config->driver }})
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">الفترة</label>
-                                    <select name="period" class="form-select">
-                                        <option value="day" {{ $period == 'day' ? 'selected' : '' }}>اليوم</option>
-                                        <option value="week" {{ $period == 'week' ? 'selected' : '' }}>هذا الأسبوع</option>
-                                        <option value="month" {{ $period == 'month' ? 'selected' : '' }}>هذا الشهر</option>
-                                        <option value="year" {{ $period == 'year' ? 'selected' : '' }}>هذه السنة</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label">نوع الملف</label>
-                                    <select name="file_type" class="form-select">
-                                        <option value="">الكل</option>
-                                        <option value="image" {{ $fileType == 'image' ? 'selected' : '' }}>صور</option>
-                                        <option value="document" {{ $fileType == 'document' ? 'selected' : '' }}>وثائق</option>
-                                        <option value="video" {{ $fileType == 'video' ? 'selected' : '' }}>فيديو</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-12">
-                                    <button type="submit" class="btn btn-primary">عرض الإحصائيات</button>
-                                </div>
-                            </div>
-                        </form>
-
-                        @if($stats)
-                            <div class="row">
-                                <div class="col-md-3">
-                                    <div class="card bg-primary text-white">
-                                        <div class="card-body">
-                                            <h6>إجمالي التخزين</h6>
-                                            <h4>{{ number_format($stats['total_bytes_stored'] / (1024**3), 2) }} GB</h4>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="card bg-success text-white">
-                                        <div class="card-body">
-                                            <h6>إجمالي الرفع</h6>
-                                            <h4>{{ number_format($stats['total_bytes_uploaded'] / (1024**3), 2) }} GB</h4>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="card bg-info text-white">
-                                        <div class="card-body">
-                                            <h6>إجمالي التحميل</h6>
-                                            <h4>{{ number_format($stats['total_bytes_downloaded'] / (1024**3), 2) }} GB</h4>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="card bg-warning text-white">
-                                        <div class="card-body">
-                                            <h6>إجمالي التكلفة</h6>
-                                            <h4>${{ number_format($stats['total_cost'], 2) }}</h4>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
+                <div class="users-header">
+                    <h5 class="users-page-title">تحليلات التخزين</h5>
+                    <div class="users-header-actions">
+                        <a href="{{ route('admin.storage.index') }}" class="users-btn-secondary">
+                            <i class="fas fa-arrow-right"></i>
+                            رجوع
+                        </a>
                     </div>
                 </div>
+
+                <div class="users-filters-card">
+                    <form method="GET" action="{{ route('admin.storage.analytics') }}" class="users-filters-form users-filters-form--analytics">
+                        <select name="config_id" class="users-select" required title="مكان التخزين">
+                            <option value="">اختر مكان التخزين</option>
+                            @foreach ($configs as $config)
+                                <option value="{{ $config->id }}" {{ (string) request('config_id') === (string) $config->id ? 'selected' : '' }}>
+                                    {{ $config->name }} ({{ App\Models\AppStorageConfig::DRIVERS[$config->driver] ?? $config->driver }})
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <select name="period" class="users-select" title="الفترة">
+                            <option value="day" {{ $period == 'day' ? 'selected' : '' }}>اليوم</option>
+                            <option value="week" {{ $period == 'week' ? 'selected' : '' }}>هذا الأسبوع</option>
+                            <option value="month" {{ $period == 'month' ? 'selected' : '' }}>هذا الشهر</option>
+                            <option value="year" {{ $period == 'year' ? 'selected' : '' }}>هذه السنة</option>
+                        </select>
+
+                        <select name="file_type" class="users-select" title="نوع الملف">
+                            <option value="">الكل</option>
+                            <option value="image" {{ $fileType == 'image' ? 'selected' : '' }}>صور</option>
+                            <option value="document" {{ $fileType == 'document' ? 'selected' : '' }}>وثائق</option>
+                            <option value="video" {{ $fileType == 'video' ? 'selected' : '' }}>فيديو</option>
+                        </select>
+
+                        <button type="submit" class="users-btn-filter users-btn-filter--search">
+                            <i class="fas fa-chart-bar me-1"></i>
+                            عرض الإحصائيات
+                        </button>
+                    </form>
+                </div>
+
+                @if ($stats && $selectedConfig)
+                    <div class="storage-analytics-context mb-3">
+                        <span class="users-muted-text">النتائج لـ</span>
+                        <strong>{{ $selectedConfig->name }}</strong>
+                    </div>
+
+                    <div class="storage-analytics-kpi-grid">
+                        <div class="users-detail-card">
+                            <div class="users-detail-card__body storage-analytics-kpi">
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon storage-analytics-kpi__icon--storage">
+                                        <i class="fas fa-database"></i>
+                                    </div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">إجمالي التخزين</span>
+                                        <div class="users-detail-item__value">
+                                            {{ number_format($stats['total_bytes_stored'] / (1024 ** 3), 2) }} GB
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="users-detail-card">
+                            <div class="users-detail-card__body storage-analytics-kpi">
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon storage-analytics-kpi__icon--upload">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                    </div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">إجمالي الرفع</span>
+                                        <div class="users-detail-item__value">
+                                            {{ number_format($stats['total_bytes_uploaded'] / (1024 ** 3), 2) }} GB
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="users-detail-card">
+                            <div class="users-detail-card__body storage-analytics-kpi">
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon storage-analytics-kpi__icon--download">
+                                        <i class="fas fa-cloud-download-alt"></i>
+                                    </div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">إجمالي التحميل</span>
+                                        <div class="users-detail-item__value">
+                                            {{ number_format($stats['total_bytes_downloaded'] / (1024 ** 3), 2) }} GB
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="users-detail-card">
+                            <div class="users-detail-card__body storage-analytics-kpi">
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon storage-analytics-kpi__icon--cost">
+                                        <i class="fas fa-dollar-sign"></i>
+                                    </div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">إجمالي التكلفة</span>
+                                        <div class="users-detail-item__value">
+                                            ${{ number_format($stats['total_cost'], 2) }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @elseif (request()->filled('config_id'))
+                    <div class="users-table-card">
+                        <div class="users-empty py-5 text-center">لا توجد بيانات للفترة المحددة.</div>
+                    </div>
+                @else
+                    <div class="users-table-card">
+                        <div class="email-empty-state py-5 text-center">
+                            <i class="fas fa-chart-pie d-block mb-3"></i>
+                            <p class="mb-0">اختر مكان التخزين والفترة لعرض الإحصائيات.</p>
+                        </div>
+                    </div>
+                @endif
+
             </div>
         </div>
     </div>
-</div>
 @stop
 
+@section('script')
+    @include('admin.components.premium.scripts')
+@stop

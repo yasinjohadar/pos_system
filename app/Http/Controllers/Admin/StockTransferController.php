@@ -34,8 +34,15 @@ class StockTransferController extends Controller
             $query->where('status', $request->status);
         }
 
-        $transfers = $query->paginate(15);
+        $transfers = $query->paginate(15)->withQueryString();
         $warehouses = Warehouse::where('is_active', true)->orderBy('name')->get();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.stock.partials.transfers-table-rows', compact('transfers'))->render(),
+                'pagination' => view('admin.pages.stock.partials.pagination', ['paginator' => $transfers])->render(),
+            ]);
+        }
 
         return view('admin.pages.stock.transfers-index', compact('transfers', 'warehouses'));
     }
@@ -43,9 +50,12 @@ class StockTransferController extends Controller
     public function create()
     {
         $warehouses = Warehouse::where('is_active', true)->orderBy('name')->get();
-        $products = Product::where('is_active', true)->orderBy('name')->get();
+        $oldProductIds = collect(old('items', []))->pluck('product_id')->filter()->unique();
+        $oldProducts = $oldProductIds->isNotEmpty()
+            ? Product::whereIn('id', $oldProductIds)->get()->keyBy('id')
+            : collect();
 
-        return view('admin.pages.stock.transfer-create', compact('warehouses', 'products'));
+        return view('admin.pages.stock.transfer-create', compact('warehouses', 'oldProducts'));
     }
 
     /**

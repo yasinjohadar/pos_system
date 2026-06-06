@@ -33,7 +33,10 @@
     </div>
 
     <div class="header">
-        <h1>فاتورة بيع</h1>
+        <h1>{{ $companySettings['company_name'] ?? 'فاتورة بيع' }}</h1>
+        @if(!empty($companySettings['tax_number']))
+            <div>الرقم الضريبي: {{ $companySettings['tax_number'] }}</div>
+        @endif
         <div class="number">رقم الفاتورة: {{ $saleInvoice->number }}</div>
         <div>التاريخ: {{ $saleInvoice->invoice_date->format('Y-m-d') }}</div>
     </div>
@@ -92,7 +95,10 @@
     @endif
 
     <div class="footer" style="margin-top: 40px;">
-        شكراً لتعاملكم
+        {{ $companySettings['invoice_footer'] ?? 'شكراً لتعاملكم' }}
+        @if(!empty($eInvoiceQr))
+            <div style="margin-top:12px;font-size:11px;word-break:break-all;">E-Invoice: {{ $eInvoiceQr }}</div>
+        @endif
     </div>
 
     <script>

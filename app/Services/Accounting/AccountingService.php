@@ -4,10 +4,12 @@ namespace App\Services\Accounting;
 
 use App\Models\CashVoucher;
 use App\Models\ChartOfAccount;
+use App\Models\FiscalYear;
 use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
 use App\Models\PurchaseInvoice;
 use App\Models\SaleInvoice;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class AccountingService
@@ -45,6 +47,7 @@ class AccountingService
                 'reference_type' => SaleInvoice::class,
                 'reference_id' => $invoice->id,
                 'is_posted' => true,
+                'source' => JournalEntry::SOURCE_AUTO,
                 'created_by' => $invoice->user_id ?? auth()->id(),
             ]);
 
@@ -82,6 +85,7 @@ class AccountingService
                 'reference_type' => PurchaseInvoice::class,
                 'reference_id' => $invoice->id,
                 'is_posted' => true,
+                'source' => JournalEntry::SOURCE_AUTO,
                 'created_by' => $invoice->user_id ?? auth()->id(),
             ]);
 
@@ -118,6 +122,7 @@ class AccountingService
                 'reference_type' => CashVoucher::class,
                 'reference_id' => $voucher->id,
                 'is_posted' => true,
+                'source' => JournalEntry::SOURCE_AUTO,
                 'created_by' => $voucher->user_id ?? auth()->id(),
             ]);
             $this->addLine($entry->id, $cash->id, $amount, 0, 'قبض');
@@ -149,12 +154,112 @@ class AccountingService
                 'reference_type' => CashVoucher::class,
                 'reference_id' => $voucher->id,
                 'is_posted' => true,
+                'source' => JournalEntry::SOURCE_AUTO,
                 'created_by' => $voucher->user_id ?? auth()->id(),
             ]);
             $this->addLine($entry->id, $expenses->id, $amount, 0, 'مصروف');
             $this->addLine($entry->id, $cash->id, 0, $amount, 'صرف');
             return $entry->load('lines.account');
         });
+    }
+
+    /**
+     * عكس قيد موجود (لإلغاء سند أو معاملة).
+     */
+    public function createReversalEntry(JournalEntry $original): ?JournalEntry
+    {
+        if ($original->reversed_entry_id) {
+            return null;
+        }
+
+        $existingReversal = JournalEntry::where('reversed_entry_id', $original->id)->first();
+        if ($existingReversal) {
+            return $existingReversal;
+        }
+
+        $original->load('lines');
+
+        return DB::transaction(function () use ($original) {
+            $entry = JournalEntry::create([
+                'entry_number' => JournalEntry::generateEntryNumber(),
+                'entry_date' => now()->toDateString(),
+                'description' => 'عكس قيد #' . $original->entry_number,
+                'reference_type' => $original->reference_type,
+                'reference_id' => $original->reference_id,
+                'is_posted' => true,
+                'source' => JournalEntry::SOURCE_REVERSAL,
+                'reversed_entry_id' => $original->id,
+                'fiscal_year_id' => FiscalYear::forDate(Carbon::today())?->id,
+                'created_by' => auth()->id(),
+            ]);
+
+            foreach ($original->lines as $line) {
+                $this->addLine($entry->id, $line->account_id, (float) $line->credit, (float) $line->debit, 'عكس - ' . ($line->description ?? ''));
+            }
+
+            return $entry->load('lines.account');
+        });
+    }
+
+    /**
+     * قيود إقفال: تصفير الإيرادات والمصروفات إلى حساب الأرباح المحتجزة (3200).
+     */
+    public function createClosingEntries(FiscalYear $fiscalYear): array
+    {
+        $retained = ChartOfAccount::findByCode('3200');
+        if (!$retained) {
+            return [];
+        }
+
+        $from = $fiscalYear->start_date->toDateString();
+        $to = $fiscalYear->end_date->toDateString();
+        $entries = [];
+
+        foreach ([ChartOfAccount::TYPE_REVENUE, ChartOfAccount::TYPE_EXPENSE] as $type) {
+            $accounts = ChartOfAccount::where('type', $type)->where('is_active', true)->get();
+            foreach ($accounts as $account) {
+                $totals = JournalEntryLine::query()
+                    ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
+                    ->where('journal_entry_lines.account_id', $account->id)
+                    ->where('journal_entries.is_posted', true)
+                    ->whereBetween('journal_entries.entry_date', [$from, $to])
+                    ->selectRaw('SUM(debit) as d, SUM(credit) as c')
+                    ->first();
+
+                $debit = (float) ($totals->d ?? 0);
+                $credit = (float) ($totals->c ?? 0);
+                $balance = $debit - $credit;
+                if (abs($balance) < 0.01) {
+                    continue;
+                }
+
+                $entry = DB::transaction(function () use ($fiscalYear, $account, $retained, $balance, $type, $to) {
+                    $entry = JournalEntry::create([
+                        'entry_number' => JournalEntry::generateEntryNumber(),
+                        'entry_date' => $to,
+                        'description' => 'قيد إقفال ' . $account->name . ' - ' . $fiscalYear->name,
+                        'is_posted' => true,
+                        'source' => JournalEntry::SOURCE_CLOSING,
+                        'fiscal_year_id' => $fiscalYear->id,
+                        'created_by' => auth()->id(),
+                    ]);
+
+                    if ($type === ChartOfAccount::TYPE_REVENUE) {
+                        $this->addLine($entry->id, $account->id, abs($balance), 0, 'إقفال إيراد');
+                        $this->addLine($entry->id, $retained->id, 0, abs($balance), 'ترحيل للأرباح المحتجزة');
+                    } else {
+                        $this->addLine($entry->id, $retained->id, abs($balance), 0, 'ترحيل من الأرباح المحتجزة');
+                        $this->addLine($entry->id, $account->id, 0, abs($balance), 'إقفال مصروف');
+                    }
+
+                    return $entry;
+                });
+
+                $entries[] = $entry;
+            }
+        }
+
+        return $entries;
     }
 
     private function addLine(int $journalEntryId, int $accountId, float $debit, float $credit, ?string $description = null): JournalEntryLine

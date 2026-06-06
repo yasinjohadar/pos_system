@@ -31,7 +31,14 @@ class FinancialTransferController extends Controller
             $query->where('transfer_date', '<=', $request->input('to_date'));
         }
 
-        $transfers = $query->paginate(15);
+        $transfers = $query->paginate(15)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.sales.financial-transfers.partials.table-rows', compact('transfers'))->render(),
+                'pagination' => view('admin.pages.sales.financial-transfers.partials.pagination', compact('transfers'))->render(),
+            ]);
+        }
 
         return view('admin.pages.sales.financial-transfers.index', compact('transfers'));
     }

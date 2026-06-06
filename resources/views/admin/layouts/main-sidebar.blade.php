@@ -132,13 +132,16 @@
                                         <li class="slide {{ request()->routeIs('admin.stock.inventory-count.*') ? 'active' : '' }}">
                                             <a href="{{ route('admin.stock.inventory-count.index') }}" class="side-menu__item">الجرد</a>
                                         </li>
+                                        <li class="slide {{ request()->routeIs('admin.product-batches.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.product-batches.index') }}" class="side-menu__item">دفعات/صلاحية</a>
+                                        </li>
                                         <li class="slide">
                                             <a href="{{ route('admin.stock.balances.index', ['low_stock' => 1]) }}" class="side-menu__item">تنبيهات انخفاض المخزون</a>
                                         </li>
                                     </ul>
                                 </li>
                                 <!-- المبيعات -->
-                                <li class="slide has-sub {{ request()->routeIs('admin.sale-invoices.*') || request()->routeIs('admin.sale-returns.*') || request()->routeIs('admin.coupons.*') || request()->routeIs('admin.customers.*') || request()->routeIs('admin.payment-methods.*') || request()->routeIs('admin.treasuries.*') || request()->routeIs('admin.bank-accounts.*') || request()->routeIs('admin.financial-transfers.*') || request()->routeIs('admin.checks.*') || request()->routeIs('admin.promotions.*') || request()->routeIs('admin.price-lists.*') || request()->routeIs('admin.customer-segments.*') || request()->routeIs('admin.loyalty.*') || request()->routeIs('admin.cash-vouchers.*') || request()->routeIs('admin.fiscal-years.*') || request()->routeIs('admin.chart-of-accounts.*') || request()->routeIs('admin.journal-entries.*') || request()->routeIs('admin.reports.trial-balance.*') || request()->routeIs('admin.reports.income-statement.*') || request()->routeIs('admin.attachments.index') ? 'open active' : '' }}">
+                                <li class="slide has-sub {{ request()->routeIs('admin.sale-invoices.*') || request()->routeIs('admin.sale-returns.*') || request()->routeIs('admin.sales-quotes.*') || request()->routeIs('admin.coupons.*') || request()->routeIs('admin.customers.*') || request()->routeIs('admin.payment-methods.*') || request()->routeIs('admin.treasuries.*') || request()->routeIs('admin.bank-accounts.*') || request()->routeIs('admin.financial-transfers.*') || request()->routeIs('admin.checks.*') || request()->routeIs('admin.promotions.*') || request()->routeIs('admin.price-lists.*') || request()->routeIs('admin.customer-segments.*') || request()->routeIs('admin.loyalty.*') || request()->routeIs('admin.pos.*') ? 'open active' : '' }}">
                                     <a href="javascript:void(0);" class="side-menu__item">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="side-menu__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
@@ -151,6 +154,9 @@
                                     <ul class="slide-menu child1">
                                         <li class="slide {{ request()->routeIs('admin.sale-invoices.*') ? 'active' : '' }}">
                                             <a href="{{ route('admin.sale-invoices.index') }}" class="side-menu__item">فواتير البيع</a>
+                                        </li>
+                                        <li class="slide {{ request()->routeIs('admin.sales-quotes.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.sales-quotes.index') }}" class="side-menu__item">عروض الأسعار</a>
                                         </li>
                                         <li class="slide {{ request()->routeIs('admin.sale-returns.*') ? 'active' : '' }}">
                                             <a href="{{ route('admin.sale-returns.index') }}" class="side-menu__item">مرتجعات البيع</a>
@@ -188,6 +194,33 @@
                                         <li class="slide {{ request()->routeIs('admin.checks.*') ? 'active' : '' }}">
                                             <a href="{{ route('admin.checks.index') }}" class="side-menu__item">الشيكات</a>
                                         </li>
+                                        @can('pos-access')
+                                        <li class="slide {{ request()->routeIs('admin.pos.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.pos.index') }}" class="side-menu__item">نقطة البيع (POS)</a>
+                                        </li>
+                                        @endcan
+                                    </ul>
+                                </li>
+                                <!-- المحاسبة -->
+                                <li class="slide has-sub {{ request()->routeIs('admin.settings.company.*') || request()->routeIs('admin.taxes.*') || request()->routeIs('admin.cash-vouchers.*') || request()->routeIs('admin.fiscal-years.*') || request()->routeIs('admin.chart-of-accounts.*') || request()->routeIs('admin.journal-entries.*') || request()->routeIs('admin.bank-reconciliations.*') || request()->routeIs('admin.reports.trial-balance.*') || request()->routeIs('admin.reports.income-statement.*') || request()->routeIs('admin.reports.general-ledger.*') || request()->routeIs('admin.reports.account-statement.*') || request()->routeIs('admin.reports.balance-sheet.*') || request()->routeIs('admin.reports.cash-flow.*') || request()->routeIs('admin.attachments.index') ? 'open active' : '' }}">
+                                    <a href="javascript:void(0);" class="side-menu__item">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="side-menu__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/>
+                                        </svg>
+                                        <span class="side-menu__label">المحاسبة</span>
+                                        <i class="fe fe-chevron-right side-menu__angle"></i>
+                                    </a>
+                                    <ul class="slide-menu child1">
+                                        @can('settings-manage')
+                                        <li class="slide {{ request()->routeIs('admin.settings.company.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.settings.company.index') }}" class="side-menu__item">إعدادات الشركة</a>
+                                        </li>
+                                        @endcan
+                                        @can('tax-list')
+                                        <li class="slide {{ request()->routeIs('admin.taxes.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.taxes.index') }}" class="side-menu__item">الضرائب</a>
+                                        </li>
+                                        @endcan
                                         <li class="slide {{ request()->routeIs('admin.cash-vouchers.*') ? 'active' : '' }}">
                                             <a href="{{ route('admin.cash-vouchers.index') }}" class="side-menu__item">سندات القبض والصرف</a>
                                         </li>
@@ -200,11 +233,28 @@
                                         <li class="slide {{ request()->routeIs('admin.journal-entries.*') ? 'active' : '' }}">
                                             <a href="{{ route('admin.journal-entries.index') }}" class="side-menu__item">القيود اليومية</a>
                                         </li>
+                                        @can('bank-reconciliation-list')
+                                        <li class="slide {{ request()->routeIs('admin.bank-reconciliations.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.bank-reconciliations.index') }}" class="side-menu__item">التسوية البنكية</a>
+                                        </li>
+                                        @endcan
                                         <li class="slide {{ request()->routeIs('admin.reports.trial-balance.*') ? 'active' : '' }}">
                                             <a href="{{ route('admin.reports.trial-balance.index') }}" class="side-menu__item">ميزان المراجعة</a>
                                         </li>
                                         <li class="slide {{ request()->routeIs('admin.reports.income-statement.*') ? 'active' : '' }}">
                                             <a href="{{ route('admin.reports.income-statement.index') }}" class="side-menu__item">قائمة الدخل</a>
+                                        </li>
+                                        <li class="slide {{ request()->routeIs('admin.reports.balance-sheet.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.reports.balance-sheet.index') }}" class="side-menu__item">الميزانية العمومية</a>
+                                        </li>
+                                        <li class="slide {{ request()->routeIs('admin.reports.general-ledger.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.reports.general-ledger.index') }}" class="side-menu__item">دفتر الأستاذ</a>
+                                        </li>
+                                        <li class="slide {{ request()->routeIs('admin.reports.account-statement.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.reports.account-statement.index') }}" class="side-menu__item">كشف حساب</a>
+                                        </li>
+                                        <li class="slide {{ request()->routeIs('admin.reports.cash-flow.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.reports.cash-flow.index') }}" class="side-menu__item">التدفقات النقدية</a>
                                         </li>
                                         <li class="slide {{ request()->routeIs('admin.attachments.index') ? 'active' : '' }}">
                                             <a href="{{ route('admin.attachments.index') }}" class="side-menu__item">المرفقات</a>
@@ -212,7 +262,7 @@
                                     </ul>
                                 </li>
                                 <!-- المشتريات -->
-                                <li class="slide has-sub {{ request()->routeIs('admin.purchase-invoices.*') || request()->routeIs('admin.purchase-returns.*') || request()->routeIs('admin.suppliers.*') ? 'open active' : '' }}">
+                                <li class="slide has-sub {{ request()->routeIs('admin.purchase-invoices.*') || request()->routeIs('admin.purchase-returns.*') || request()->routeIs('admin.purchase-orders.*') || request()->routeIs('admin.suppliers.*') ? 'open active' : '' }}">
                                     <a href="javascript:void(0);" class="side-menu__item">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="side-menu__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
@@ -224,6 +274,9 @@
                                     <ul class="slide-menu child1">
                                         <li class="slide {{ request()->routeIs('admin.purchase-invoices.*') ? 'active' : '' }}">
                                             <a href="{{ route('admin.purchase-invoices.index') }}" class="side-menu__item">فواتير الشراء</a>
+                                        </li>
+                                        <li class="slide {{ request()->routeIs('admin.purchase-orders.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.purchase-orders.index') }}" class="side-menu__item">أوامر الشراء</a>
                                         </li>
                                         <li class="slide {{ request()->routeIs('admin.purchase-returns.*') ? 'active' : '' }}">
                                             <a href="{{ route('admin.purchase-returns.index') }}" class="side-menu__item">مرتجعات الشراء</a>

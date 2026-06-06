@@ -5,13 +5,16 @@ namespace App\Http\Controllers\Admin;
 use HashContext;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Controllers\Concerns\MergesPhoneInput;
 
 class UserController extends Controller
 {
+    use MergesPhoneInput;
     // public function __construct()
     // {
     //     // يمكنه فقط رؤية قائمة المستخدمين (index)
@@ -37,7 +40,7 @@ class UserController extends Controller
 
     $this->middleware('permission:user-list')->only('index');
     $this->middleware('permission:user-create')->only(['create', 'store']);
-    $this->middleware('permission:user-edit')->only(['edit', 'update']);
+    $this->middleware('permission:user-edit')->only(['edit', 'update', 'toggleStatus', 'updatePassword']);
     $this->middleware('permission:user-delete')->only('destroy');
     $this->middleware('permission:user-show')->only('show');
 }
@@ -48,40 +51,49 @@ class UserController extends Controller
 public function index(Request $request)
     {
         $roles = Role::all();
+        $sessions = $this->getUserSessions();
+        $users = $this->buildUsersQuery($request)->paginate(10)->withQueryString();
 
-        // جلب آخر جلسات المستخدمين
-        $sessions = DB::table('sessions')
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.users.partials.table-rows', compact('users', 'sessions'))->render(),
+                'pagination' => view('admin.pages.users.partials.pagination', compact('users'))->render(),
+            ]);
+        }
+
+        return view('admin.pages.users.index', compact('users', 'roles', 'sessions'));
+    }
+
+    private function getUserSessions()
+    {
+        return DB::table('sessions')
             ->orderByDesc('last_activity')
             ->get()
             ->groupBy('user_id');
+    }
 
-        // بدء استعلام المستخدمين
+    private function buildUsersQuery(Request $request)
+    {
         $usersQuery = User::query();
 
-        // فلترة حسب البحث (name, email, phone)
         if ($request->filled('query')) {
             $search = $request->input('query');
             $usersQuery->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%$search%")
-                  ->orWhere('email', 'like', "%$search%")
-                  ->orWhere('phone', 'like', "%$search%");
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
             });
         }
 
-        // فلترة حسب الحالة
         if ($request->filled('status')) {
             $usersQuery->where('status', $request->input('status'));
         }
 
-        // فلترة حسب الحالة النشطة
         if ($request->filled('is_active')) {
-            $usersQuery->where('is_active', $request->input('is_active'));
+            $usersQuery->where('is_active', (int) $request->input('is_active'));
         }
 
-        // تنفيذ الاستعلام
-        $users = $usersQuery->paginate(10);
-
-        return view("admin.pages.users.index", compact("users", "roles", "sessions"));
+        return $usersQuery;
     }
 
 
@@ -102,24 +114,23 @@ public function index(Request $request)
      */
     public function store(Request $request)
     {
-        // التحقق من صحة البيانات
-        $request->validate([
+        $this->validateRequestWithPhone($request, array_merge([
             'name' => 'required|string|max:255',
             'username' => 'nullable|string|max:255|unique:users,username',
             'email' => 'required|string|email|max:255|unique:users,email',
-            'phone' => 'nullable|string|max:20|unique:users,phone',
             'password' => 'required|string|min:8|confirmed',
             'status' => 'required|in:active,inactive,banned',
             'is_active' => 'boolean',
             'roles' => 'array',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ], [
+        ], $this->phoneRules('phone', Rule::unique('users', 'phone'))), [
             'name.required' => 'الاسم مطلوب',
             'email.required' => 'البريد الإلكتروني مطلوب',
             'email.email' => 'البريد الإلكتروني غير صحيح',
             'email.unique' => 'البريد الإلكتروني مستخدم بالفعل',
             'username.unique' => 'اسم المستخدم مستخدم بالفعل',
             'phone.unique' => 'رقم الهاتف مستخدم بالفعل',
+            'phone.regex' => 'رقم الهاتف غير صحيح — أدخل الرقم بدون صفر في البداية',
             'password.required' => 'كلمة المرور مطلوبة',
             'password.min' => 'كلمة المرور يجب أن تكون 8 أحرف على الأقل',
             'password.confirmed' => 'تأكيد كلمة المرور غير متطابق',
@@ -185,25 +196,22 @@ public function index(Request $request)
         $user = User::findOrFail($id);
 
         // التحقق من صحة البيانات
-        $request->validate([
+        $this->validateRequestWithPhone($request, array_merge([
             'name' => 'required|string|max:255',
             'username' => 'nullable|string|max:255|unique:users,username,' . $id,
             'email' => 'required|string|email|max:255|unique:users,email,' . $id,
-            'phone' => 'nullable|string|max:20|unique:users,phone,' . $id,
-            'password' => 'nullable|string|min:8|confirmed',
             'status' => 'required|in:active,inactive,banned',
             'is_active' => 'boolean',
             'roles' => 'array',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ], [
+        ], $this->phoneRules('phone', Rule::unique('users', 'phone')->ignore($id))), [
             'name.required' => 'الاسم مطلوب',
             'email.required' => 'البريد الإلكتروني مطلوب',
             'email.email' => 'البريد الإلكتروني غير صحيح',
             'email.unique' => 'البريد الإلكتروني مستخدم بالفعل',
             'username.unique' => 'اسم المستخدم مستخدم بالفعل',
             'phone.unique' => 'رقم الهاتف مستخدم بالفعل',
-            'password.min' => 'كلمة المرور يجب أن تكون 8 أحرف على الأقل',
-            'password.confirmed' => 'تأكيد كلمة المرور غير متطابق',
+            'phone.regex' => 'رقم الهاتف غير صحيح — أدخل الرقم بدون صفر في البداية',
             'status.required' => 'حالة المستخدم مطلوبة',
             'photo.image' => 'يجب أن يكون الملف صورة',
             'photo.mimes' => 'نوع الصورة غير مدعوم',
@@ -219,11 +227,6 @@ public function index(Request $request)
             'status' => $request->status,
             'is_active' => $request->has('is_active'),
         ];
-
-        // تحديث كلمة المرور فقط إذا تم إدخالها
-        if ($request->filled('password')) {
-            $updateData['password'] = Hash::make($request->password);
-        }
 
         // معالجة الصورة
         if ($request->hasFile('photo')) {
@@ -252,14 +255,11 @@ public function index(Request $request)
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Request $request)
+    public function destroy(User $user)
     {
-        $user = User::findOrFail($request->id);
-
         $user->delete();
 
-        return redirect()->route("users.index")->with("success" , "تم حذف مستخدم جديد بنجاح");
-
+        return redirect()->route('users.index')->with('success', 'تم حذف المستخدم بنجاح');
     }
 
 
@@ -287,81 +287,35 @@ public function index(Request $request)
 public function toggleStatus(Request $request, $id)
 {
     try {
-        \Log::info('Toggle status request received', [
-            'user_id' => $id,
-            'request_data' => $request->all(),
-            'request_method' => $request->method(),
-            'request_url' => $request->url(),
-            'request_headers' => $request->headers->all(),
-            'auth_user' => auth()->id()
-        ]);
-
         $user = User::findOrFail($id);
 
-        \Log::info('User found', [
-            'user_id' => $user->id,
-            'user_name' => $user->name,
-            'current_is_active' => $user->is_active
-        ]);
-
-        // التحقق من أن المستخدم لا يحاول إلغاء تفعيل نفسه
         if ($user->id === auth()->id()) {
-            \Log::warning('User tried to deactivate themselves', [
-                'user_id' => $user->id
-            ]);
-
             return response()->json([
                 'success' => false,
-                'message' => 'لا يمكنك إلغاء تفعيل حسابك'
+                'message' => 'لا يمكنك إلغاء تفعيل حسابك',
             ], 400);
         }
 
-        // حفظ الحالة القديمة
-        $oldStatus = $user->is_active;
-
-        // تبديل الحالة
-        $newStatus = !$user->is_active;
-
-        // تحديث الحالة باستخدام update للتأكد من التحديث
-        $user->update(['is_active' => $newStatus]);
-
-        // إعادة تحميل المستخدم للتأكد من الحصول على القيمة المحدثة
+        $user->update(['is_active' => ! $user->is_active]);
         $user->refresh();
-
-        \Log::info('User status updated', [
-            'user_id' => $user->id,
-            'user_name' => $user->name,
-            'old_status' => $oldStatus,
-            'new_status' => $user->is_active,
-            'toggled_by' => auth()->id()
-        ]);
 
         $status = $user->is_active ? 'مفعل' : 'غير مفعل';
 
-        $response = [
+        return response()->json([
             'success' => true,
             'message' => "تم تحديث حالة المستخدم إلى: {$status}",
-            'is_active' => (bool) $user->is_active
-        ];
-
-        \Log::info('Toggle status response', [
-            'user_id' => $user->id,
-            'response' => $response
+            'is_active' => (bool) $user->is_active,
         ]);
-
-        return response()->json($response);
-
     } catch (\Exception $e) {
         \Log::error('Error toggling user status', [
             'user_id' => $id,
             'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-            'toggled_by' => auth()->id()
+            'toggled_by' => auth()->id(),
         ]);
 
         return response()->json([
             'success' => false,
-            'message' => 'حدث خطأ أثناء تحديث حالة المستخدم: ' . $e->getMessage()
+            'message' => 'حدث خطأ أثناء تحديث حالة المستخدم',
         ], 500);
     }
 }

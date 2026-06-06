@@ -19,12 +19,19 @@ class CashVoucher extends Model
         'description',
         'user_id',
         'notes',
+        'status',
+        'cancelled_at',
+        'cancelled_by',
     ];
 
     protected $casts = [
         'date' => 'date',
         'amount' => 'decimal:2',
+        'cancelled_at' => 'datetime',
     ];
+
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_CANCELLED = 'cancelled';
 
     public const TYPE_RECEIPT = 'receipt';
     public const TYPE_PAYMENT = 'payment';
@@ -39,9 +46,19 @@ class CashVoucher extends Model
         return $this->belongsTo(BankAccount::class);
     }
 
+    public function cancelledBy()
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->status === self::STATUS_CANCELLED;
     }
 
     public static function generateNumber(): string

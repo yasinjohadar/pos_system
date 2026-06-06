@@ -1,307 +1,167 @@
 @extends('admin.layouts.master')
 
-@section('page-title', 'ربط WhatsApp Web')
+@section('page-title')
+    ربط WhatsApp Web
+@stop
+
+@section('css')
+    @include('admin.components.premium.styles')
+    <style>@include('admin.pages.users.partials.form-styles')</style>
+    <style>
+        .whatsapp-qr-card {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 280px;
+            padding: 1.25rem;
+            border-radius: 12px;
+            background: #fff;
+            border: 1px solid var(--users-border, #e5e7eb);
+        }
+
+        .whatsapp-qr-card img,
+        .whatsapp-qr-card svg {
+            max-width: 280px;
+            height: auto;
+        }
+    </style>
+@stop
 
 @section('content')
-<!-- Start::app-content -->
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <!-- Page Header -->
-        <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
-            <div>
-                <h4 class="page-title fw-semibold fs-18 mb-0">ربط WhatsApp Web</h4>
-                <p class="fw-normal text-muted fs-14 mb-0">اربط جهازك الشخصي مع النظام عبر QR Code</p>
-            </div>
-            <div>
-                <a href="{{ route('admin.whatsapp-settings.index') }}" class="btn btn-outline-primary">
-                    <i class="ri-arrow-right-line me-1"></i>العودة للإعدادات
-                </a>
-            </div>
-        </div>
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
 
-        <div class="row">
-            <div class="col-xl-8 col-lg-10 col-md-12 mx-auto">
-                <div class="card custom-card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="ri-qr-code-line me-2"></i>حالة الاتصال
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        @if($session && $session->isConnected())
-                            <!-- Connected State -->
-                            <div class="text-center py-4">
-                                <div class="mb-3">
-                                    <i class="ri-checkbox-circle-fill text-success" style="font-size: 64px;"></i>
-                                </div>
-                                <h4 class="text-success mb-2">متصل بنجاح</h4>
-                                <p class="text-muted mb-3">
-                                    <strong>الاسم:</strong> {{ $session->name ?? 'غير محدد' }}<br>
-                                    <strong>رقم الهاتف:</strong> {{ $session->phone_number ?? 'غير محدد' }}<br>
-                                    <strong>تاريخ الاتصال:</strong> {{ $session->connected_at?->format('Y-m-d H:i:s') ?? 'غير محدد' }}
-                                </p>
-                                <button type="button" class="btn btn-danger" onclick="disconnectSession('{{ $session->session_id }}')">
-                                    <i class="ri-disconnect-line me-1"></i>قطع الاتصال
-                                </button>
-                            </div>
-                        @else
-                            <!-- Not Connected State -->
-                            <div class="text-center py-4">
-                                <div id="qr-container" class="mb-4" style="display: none;">
-                                    <h5 class="mb-3">امسح QR Code باستخدام WhatsApp</h5>
-                                    <div class="d-flex justify-content-center mb-3">
-                                        <div id="qr-code-display" class="border p-3 bg-white">
-                                            <!-- QR Code will be displayed here -->
-                                        </div>
-                                    </div>
-                                    <p class="text-muted small">
-                                        <i class="ri-information-line me-1"></i>
-                                        افتح WhatsApp على هاتفك → الإعدادات → الأجهزة المرتبطة → ربط جهاز
-                                    </p>
-                                </div>
-                                
-                                <div id="loading-container" class="text-center py-4" style="display: none;">
-                                    <div class="spinner-border text-primary mb-3" role="status">
-                                        <span class="visually-hidden">جاري التحميل...</span>
-                                    </div>
-                                    <p>جاري إعداد الاتصال...</p>
-                                </div>
-                                
-                                <div id="error-container" class="alert alert-danger" style="display: none;">
-                                    <i class="ri-error-warning-line me-2"></i>
-                                    <span id="error-message"></span>
-                                    <div class="mt-3">
-                                        <small>
-                                            <strong>ملاحظة:</strong> يجب أن يكون Node.js service يعمل على: 
-                                            <code>{{ $nodejsUrl ?? 'http://localhost:3000' }}</code>
-                                            <br>
-                                            راجع ملف <code>whatsapp-web-service-README.md</code> لمعرفة كيفية إعداد الخدمة.
-                                        </small>
-                                    </div>
-                                </div>
-                                
-                                <div id="action-buttons" class="mt-4">
-                                    <button type="button" class="btn btn-primary" onclick="startConnection()">
-                                        <i class="ri-qr-code-line me-1"></i>بدء الربط
-                                    </button>
-                                </div>
-                                
-                                <div class="alert alert-info mt-4">
-                                    <i class="ri-information-line me-2"></i>
-                                    <strong>مهم:</strong> يجب إعداد Node.js service أولاً قبل استخدام هذه الميزة.
-                                    <br>
-                                    <small>راجع ملف <code>whatsapp-web-service-README.md</code> في المجلد الرئيسي للمشروع.</small>
-                                </div>
-                            </div>
-                        @endif
+                @include('admin.components.premium.flash')
+
+                <div class="users-header">
+                    <h5 class="users-page-title">ربط WhatsApp Web</h5>
+                    <div class="users-header-actions">
+                        <a href="{{ route('admin.whatsapp-web-settings.index') }}" class="users-btn-secondary">
+                            <i class="fas fa-arrow-right"></i>
+                            العودة للإعدادات
+                        </a>
                     </div>
                 </div>
+
+                <div class="users-form-layout">
+                    <div class="users-form-card" style="max-width: 720px; margin: 0 auto; width: 100%;">
+                        <div class="users-form-card__header">
+                            <h6 class="users-form-card__title">
+                                <i class="fas fa-qrcode"></i>
+                                حالة الاتصال
+                            </h6>
+                        </div>
+                        <div class="users-form-card__body">
+                            @if ($session && $session->isConnected())
+                                <div class="text-center py-3">
+                                    <div class="mb-3">
+                                        <i class="fas fa-check-circle text-success" style="font-size: 3.5rem;"></i>
+                                    </div>
+                                    <h5 class="text-success mb-3">متصل بنجاح</h5>
+                                    <div class="users-detail-list mb-4">
+                                        <div class="users-detail-item">
+                                            <div class="users-detail-item__icon"><i class="fas fa-user"></i></div>
+                                            <div class="users-detail-item__content">
+                                                <span class="users-detail-item__label">الاسم</span>
+                                                <div class="users-detail-item__value">{{ $session->name ?? 'غير محدد' }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="users-detail-item">
+                                            <div class="users-detail-item__icon"><i class="fas fa-phone"></i></div>
+                                            <div class="users-detail-item__content">
+                                                <span class="users-detail-item__label">رقم الهاتف</span>
+                                                <div class="users-detail-item__value users-color-value">{{ $session->phone_number ?? 'غير محدد' }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="users-detail-item">
+                                            <div class="users-detail-item__icon"><i class="fas fa-calendar"></i></div>
+                                            <div class="users-detail-item__content">
+                                                <span class="users-detail-item__label">تاريخ الاتصال</span>
+                                                <div class="users-detail-item__value">{{ $session->connected_at?->format('Y-m-d H:i:s') ?? 'غير محدد' }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="users-btn-secondary users-action-btn--delete"
+                                        id="disconnect-session-btn" data-session-id="{{ $session->session_id }}">
+                                        <i class="fas fa-unlink"></i>
+                                        قطع الاتصال
+                                    </button>
+                                </div>
+                            @else
+                                <div class="text-center py-2">
+                                    <div id="qr-container" class="mb-4" hidden>
+                                        <h6 class="mb-3">امسح QR Code باستخدام WhatsApp</h6>
+                                        <div class="whatsapp-qr-card mb-3">
+                                            <div id="qr-code-display"></div>
+                                        </div>
+                                        <p class="users-muted-text small mb-0">
+                                            <i class="fas fa-info-circle"></i>
+                                            افتح WhatsApp → الإعدادات → الأجهزة المرتبطة → ربط جهاز
+                                        </p>
+                                    </div>
+
+                                    <div id="loading-container" class="text-center py-4" hidden>
+                                        <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
+                                        <p class="users-muted-text mb-0">جاري إعداد الاتصال...</p>
+                                    </div>
+
+                                    <div id="error-container" class="email-form-alert email-form-alert--warning mb-4" hidden>
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span>
+                                            <strong id="error-message"></strong>
+                                            <br>
+                                            <small class="users-muted-text">
+                                                تحقق من تشغيل Node.js على
+                                                <span class="users-color-value">{{ $nodejsUrl ?? 'http://localhost:3000' }}</span>
+                                                — راجع <code>whatsapp-web-service-README.md</code>
+                                            </small>
+                                        </span>
+                                    </div>
+
+                                    <div id="action-buttons" class="mb-4">
+                                        <button type="button" class="users-btn-submit" id="start-connection-btn">
+                                            <i class="fas fa-qrcode"></i>
+                                            بدء الربط
+                                        </button>
+                                    </div>
+
+                                    <div class="email-form-alert">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span>
+                                            <strong>مهم:</strong> يجب إعداد Node.js service أولاً قبل استخدام هذه الميزة.
+                                            راجع ملف <code>whatsapp-web-service-README.md</code> في المجلد الرئيسي للمشروع.
+                                        </span>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
-</div>
-<!-- End::app-content -->
-@endsection
+@stop
 
-@section('scripts')
-<script>
-let currentSessionId = null;
-let statusCheckInterval = null;
-
-@if($session && !$session->isConnected())
-    // Auto-start connection if session exists but not connected
-    // Disabled for now - user should click button manually
-    // window.addEventListener('DOMContentLoaded', function() {
-    //     startConnection();
-    // });
-@endif
-
-function startConnection() {
-    const loadingContainer = document.getElementById('loading-container');
-    const qrContainer = document.getElementById('qr-container');
-    const errorContainer = document.getElementById('error-container');
-    const actionButtons = document.getElementById('action-buttons');
-    
-    // Show loading
-    if (loadingContainer) loadingContainer.style.display = 'block';
-    if (qrContainer) qrContainer.style.display = 'none';
-    if (errorContainer) errorContainer.style.display = 'none';
-    if (actionButtons) actionButtons.style.display = 'none';
-    
-    // Create AbortController for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
-    
-    fetch('{{ route("admin.whatsapp-web.start-connection") }}', {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-        signal: controller.signal
-    })
-    .then(response => {
-        clearTimeout(timeoutId);
-        if (!response.ok) {
-            return response.json().then(data => {
-                throw new Error(data.message || `HTTP error! status: ${response.status}`);
+@section('script')
+    @include('admin.components.premium.scripts')
+    @if (!($session && $session->isConnected()))
+        <script src="{{ asset('assets/js/whatsapp-web-connect.js') }}"></script>
+        <script>
+            WhatsAppWebConnect.init({
+                startUrl: @json(route('admin.whatsapp-web.start-connection')),
+                statusUrlTemplate: @json(url('admin/whatsapp-web/status/__SESSION__')),
+                disconnectUrlTemplate: @json(url('admin/whatsapp-web/disconnect/__SESSION__')),
+                nodejsUrl: @json($nodejsUrl ?? 'http://localhost:3000'),
             });
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            currentSessionId = data.session_id;
-            if (data.qr_code) {
-                displayQrCode(data.qr_code);
-                startStatusCheck(data.session_id);
-            } else {
-                showError('لم يتم الحصول على QR Code. تأكد من أن Node.js service يعمل.');
-            }
-        } else {
-            showError(data.message || 'فشل بدء عملية الربط');
-        }
-    })
-    .catch(error => {
-        clearTimeout(timeoutId);
-        console.error('Error:', error);
-        
-        let errorMessage = 'حدث خطأ أثناء الاتصال';
-        if (error.name === 'AbortError') {
-            errorMessage = 'انتهت مهلة الاتصال. تأكد من أن Node.js service يعمل على: {{ $nodejsUrl ?? "http://localhost:3000" }}';
-        } else if (error.message) {
-            errorMessage = error.message;
-        }
-        
-        showError(errorMessage);
-    })
-    .finally(() => {
-        if (loadingContainer) loadingContainer.style.display = 'none';
-    });
-}
-
-function displayQrCode(qrCodeData) {
-    const qrContainer = document.getElementById('qr-container');
-    const qrDisplay = document.getElementById('qr-code-display');
-    
-    if (qrContainer && qrDisplay) {
-        // QR Code can be base64 image or SVG
-        if (qrCodeData.startsWith('data:image')) {
-            qrDisplay.innerHTML = `<img src="${qrCodeData}" alt="QR Code" style="max-width: 300px;">`;
-        } else if (qrCodeData.startsWith('<svg')) {
-            qrDisplay.innerHTML = qrCodeData;
-        } else {
-            // Assume it's base64 without data URI
-            qrDisplay.innerHTML = `<img src="data:image/png;base64,${qrCodeData}" alt="QR Code" style="max-width: 300px;">`;
-        }
-        qrContainer.style.display = 'block';
-    }
-}
-
-function startStatusCheck(sessionId) {
-    // Clear any existing interval
-    if (statusCheckInterval) {
-        clearInterval(statusCheckInterval);
-    }
-    
-    // Check status every 3 seconds
-    statusCheckInterval = setInterval(() => {
-        checkStatus(sessionId);
-    }, 3000);
-    
-    // Initial check
-    checkStatus(sessionId);
-}
-
-function checkStatus(sessionId) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 seconds timeout
-    
-    fetch(`{{ url('admin/whatsapp-web/status') }}/${sessionId}`, {
-        method: 'GET',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}',
-            'Accept': 'application/json'
-        },
-        signal: controller.signal
-    })
-    .then(response => {
-        clearTimeout(timeoutId);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success && data.connected) {
-            // Connected successfully
-            if (statusCheckInterval) {
-                clearInterval(statusCheckInterval);
-            }
-            // Reload page to show connected state
-            window.location.reload();
-        } else if (data.success && data.status === 'connecting') {
-            // Still connecting, update QR code if needed
-            if (data.qr_code) {
-                displayQrCode(data.qr_code);
-            }
-        }
-    })
-    .catch(error => {
-        clearTimeout(timeoutId);
-        console.error('Status check error:', error);
-        // Don't show error for status checks, just log it
-        // If connection fails repeatedly, user can retry manually
-    });
-}
-
-function disconnectSession(sessionId) {
-    if (!confirm('هل أنت متأكد من قطع الاتصال؟')) {
-        return;
-    }
-    
-    fetch(`{{ url('admin/whatsapp-web/disconnect') }}/${sessionId}`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}',
-            'Accept': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            window.location.reload();
-        } else {
-            alert('فشل قطع الاتصال: ' + (data.message || 'خطأ غير معروف'));
-        }
-    })
-    .catch(error => {
-        console.error('Disconnect error:', error);
-        alert('حدث خطأ أثناء قطع الاتصال');
-    });
-}
-
-function showError(message) {
-    const errorContainer = document.getElementById('error-container');
-    const errorMessage = document.getElementById('error-message');
-    const actionButtons = document.getElementById('action-buttons');
-    const loadingContainer = document.getElementById('loading-container');
-    
-    if (errorContainer && errorMessage) {
-        errorMessage.textContent = message;
-        errorContainer.style.display = 'block';
-    }
-    if (actionButtons) actionButtons.style.display = 'block';
-    if (loadingContainer) loadingContainer.style.display = 'none';
-}
-
-// Cleanup on page unload
-window.addEventListener('beforeunload', function() {
-    if (statusCheckInterval) {
-        clearInterval(statusCheckInterval);
-    }
-});
-</script>
-@endsection
-
+        </script>
+    @else
+        <script src="{{ asset('assets/js/whatsapp-web-connect.js') }}"></script>
+        <script>
+            WhatsAppWebConnect.init({
+                disconnectUrlTemplate: @json(url('admin/whatsapp-web/disconnect/__SESSION__')),
+            });
+        </script>
+    @endif
+@stop

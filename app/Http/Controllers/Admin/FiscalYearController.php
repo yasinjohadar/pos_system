@@ -14,9 +14,28 @@ class FiscalYearController extends Controller
         $this->middleware('permission:fiscal-year-manage');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $years = FiscalYear::orderByDesc('start_date')->get();
+        $query = FiscalYear::query()->orderByDesc('start_date');
+
+        if ($request->filled('query')) {
+            $query->where('name', 'like', '%' . $request->input('query') . '%');
+        }
+        if ($request->filled('is_active')) {
+            $query->where('is_active', $request->boolean('is_active'));
+        }
+        if ($request->filled('is_closed')) {
+            $query->where('is_closed', $request->boolean('is_closed'));
+        }
+
+        $years = $query->paginate(15)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.finance.fiscal-years.partials.table-rows', compact('years'))->render(),
+                'pagination' => view('admin.pages.finance.fiscal-years.partials.pagination', compact('years'))->render(),
+            ]);
+        }
 
         return view('admin.pages.finance.fiscal-years.index', compact('years'));
     }
@@ -46,12 +65,17 @@ class FiscalYearController extends Controller
             ->with('success', 'تم إضافة سنة مالية جديدة.');
     }
 
-    public function close(FiscalYear $fiscalYear)
+    public function close(FiscalYear $fiscalYear, \App\Services\Accounting\AccountingService $accounting)
     {
+        if ($fiscalYear->is_closed) {
+            return back()->with('error', 'السنة المالية مغلقة مسبقاً.');
+        }
+
+        $accounting->createClosingEntries($fiscalYear);
+
         $fiscalYear->update(['is_closed' => true, 'is_active' => false]);
 
         return redirect()->route('admin.fiscal-years.index')
-            ->with('success', 'تم إقفال السنة المالية.');
+            ->with('success', 'تم إقفال السنة المالية وإنشاء قيود الإقفال.');
     }
 }
-

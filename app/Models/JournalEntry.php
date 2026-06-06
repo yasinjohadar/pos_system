@@ -13,6 +13,9 @@ class JournalEntry extends Model
         'reference_type',
         'reference_id',
         'is_posted',
+        'source',
+        'reversed_entry_id',
+        'fiscal_year_id',
         'created_by',
     ];
 
@@ -29,6 +32,36 @@ class JournalEntry extends Model
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public const SOURCE_AUTO = 'auto';
+    public const SOURCE_MANUAL = 'manual';
+    public const SOURCE_CLOSING = 'closing';
+    public const SOURCE_REVERSAL = 'reversal';
+
+    public function reversedEntry()
+    {
+        return $this->belongsTo(JournalEntry::class, 'reversed_entry_id');
+    }
+
+    public function fiscalYear()
+    {
+        return $this->belongsTo(FiscalYear::class);
+    }
+
+    public function totalDebit(): float
+    {
+        return (float) $this->lines->sum('debit');
+    }
+
+    public function totalCredit(): float
+    {
+        return (float) $this->lines->sum('credit');
+    }
+
+    public function isBalanced(): bool
+    {
+        return abs($this->totalDebit() - $this->totalCredit()) < 0.01;
     }
 
     public function reference()

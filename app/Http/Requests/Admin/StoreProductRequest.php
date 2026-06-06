@@ -24,6 +24,7 @@ class StoreProductRequest extends FormRequest
             'cost_price' => 'nullable|numeric|min:0',
             'image' => 'nullable|image|max:2048',
             'min_stock_alert' => 'nullable|integer|min:0',
+            'tax_id' => 'nullable|exists:taxes,id',
             'is_active' => 'boolean',
         ];
     }

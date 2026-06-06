@@ -4,138 +4,88 @@
     رسائل WhatsApp
 @stop
 
+@section('css')
+    @include('admin.components.premium.styles')
+@stop
+
 @section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
-            <div class="my-auto">
-                <h5 class="page-title fs-21 mb-1">رسائل WhatsApp</h5>
-                <nav>
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">الرئيسية</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">رسائل WhatsApp</li>
-                    </ol>
-                </nav>
-            </div>
-            <div class="my-auto">
-                <a href="{{ route('admin.whatsapp-messages.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus me-1"></i> إرسال رسالة
-                </a>
-            </div>
-        </div>
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
 
-        <div class="card mb-3">
-            <div class="card-body">
-                <form method="GET" action="{{ route('admin.whatsapp-messages.index') }}" class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">بحث</label>
-                        <input type="text" class="form-control" name="search" value="{{ request('search') }}" placeholder="البحث...">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">الاتجاه</label>
-                        <select class="form-select" name="direction">
-                            <option value="">الكل</option>
-                            <option value="inbound" {{ request('direction') == 'inbound' ? 'selected' : '' }}>واردة</option>
-                            <option value="outbound" {{ request('direction') == 'outbound' ? 'selected' : '' }}>صادرة</option>
+                @include('admin.components.premium.flash')
+
+                <div class="users-header">
+                    <h5 class="users-page-title">رسائل WhatsApp</h5>
+                    <a href="{{ route('admin.whatsapp-messages.create') }}" class="users-btn-create">
+                        <i class="fas fa-paper-plane"></i>
+                        إرسال رسالة
+                    </a>
+                </div>
+
+                <div class="users-filters-card">
+                    <form action="{{ route('admin.whatsapp-messages.index') }}" method="GET" class="users-filters-form">
+                        <input type="text" name="search" class="users-search-input"
+                            placeholder="بحث في الرسالة أو رقم المستقبل..."
+                            value="{{ request('search') }}" autocomplete="off">
+
+                        <select name="direction" class="users-select">
+                            <option value="">كل الاتجاهات</option>
+                            <option value="inbound" {{ request('direction') === 'inbound' ? 'selected' : '' }}>واردة</option>
+                            <option value="outbound" {{ request('direction') === 'outbound' ? 'selected' : '' }}>صادرة</option>
                         </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">الحالة</label>
-                        <select class="form-select" name="status">
-                            <option value="">الكل</option>
-                            <option value="queued" {{ request('status') == 'queued' ? 'selected' : '' }}>في الانتظار</option>
-                            <option value="sent" {{ request('status') == 'sent' ? 'selected' : '' }}>مرسل</option>
-                            <option value="delivered" {{ request('status') == 'delivered' ? 'selected' : '' }}>مستلم</option>
-                            <option value="read" {{ request('status') == 'read' ? 'selected' : '' }}>مقروء</option>
-                            <option value="failed" {{ request('status') == 'failed' ? 'selected' : '' }}>فشل</option>
+
+                        <select name="status" class="users-select">
+                            <option value="">كل الحالات</option>
+                            <option value="queued" {{ request('status') === 'queued' ? 'selected' : '' }}>في الانتظار</option>
+                            <option value="sent" {{ request('status') === 'sent' ? 'selected' : '' }}>مرسل</option>
+                            <option value="delivered" {{ request('status') === 'delivered' ? 'selected' : '' }}>مستلم</option>
+                            <option value="read" {{ request('status') === 'read' ? 'selected' : '' }}>مقروء</option>
+                            <option value="failed" {{ request('status') === 'failed' ? 'selected' : '' }}>فشل</option>
                         </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">من تاريخ</label>
-                        <input type="date" class="form-control" name="date_from" value="{{ request('date_from') }}">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">إلى تاريخ</label>
-                        <input type="date" class="form-control" name="date_to" value="{{ request('date_to') }}">
-                    </div>
-                    <div class="col-md-1">
-                        <label class="form-label">&nbsp;</label>
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-search"></i>
+
+                        <input type="date" name="date_from" class="users-search-input users-filter-date"
+                            value="{{ request('date_from') }}" title="من تاريخ">
+                        <input type="date" name="date_to" class="users-search-input users-filter-date"
+                            value="{{ request('date_to') }}" title="إلى تاريخ">
+
+                        <button type="submit" class="users-btn-filter users-btn-filter--search">
+                            <i class="fas fa-search me-1"></i> بحث
                         </button>
+                        <a href="{{ route('admin.whatsapp-messages.index') }}" class="users-btn-filter users-btn-filter--clear">
+                            <i class="fas fa-times me-1"></i> مسح
+                        </a>
+                    </form>
+                </div>
+
+                <div class="users-table-card">
+                    <div class="table-responsive">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">#</th>
+                                    <th style="min-width: 90px;">الاتجاه</th>
+                                    <th style="min-width: 160px;">المستقبل</th>
+                                    <th style="min-width: 200px;">الرسالة</th>
+                                    <th style="min-width: 110px;">الحالة</th>
+                                    <th style="min-width: 130px;">التاريخ</th>
+                                    <th style="min-width: 80px;">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @include('admin.pages.whatsapp-messages.partials.table-rows', ['messages' => $messages])
+                            </tbody>
+                        </table>
                     </div>
-                </form>
-            </div>
-        </div>
 
-        <div class="card shadow-sm border-0">
-            <div class="card-header">
-                <h5 class="card-title mb-0">قائمة الرسائل</h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover table-striped text-nowrap">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>الاتجاه</th>
-                                <th>المستقبل</th>
-                                <th>الرسالة</th>
-                                <th>الحالة</th>
-                                <th>التاريخ</th>
-                                <th>الإجراءات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($messages as $message)
-                                <tr>
-                                    <td>{{ $message->id }}</td>
-                                    <td>
-                                        @if($message->direction === 'inbound')
-                                            <span class="badge bg-info">واردة</span>
-                                        @else
-                                            <span class="badge bg-primary">صادرة</span>
-                                        @endif
-                                    </td>
-                                    <td>{{ $message->contact->wa_id ?? '-' }}</td>
-                                    <td>{{ \Illuminate\Support\Str::limit($message->body ?? '-', 50) }}</td>
-                                    <td>
-                                        @if($message->status === 'sent')
-                                            <span class="badge bg-success">مرسل</span>
-                                        @elseif($message->status === 'delivered')
-                                            <span class="badge bg-info">مستلم</span>
-                                        @elseif($message->status === 'read')
-                                            <span class="badge bg-primary">مقروء</span>
-                                        @elseif($message->status === 'failed')
-                                            <span class="badge bg-danger">فشل</span>
-                                        @elseif($message->status === 'queued')
-                                            <span class="badge bg-warning">في الانتظار (Queue)</span>
-                                        @else
-                                            <span class="badge bg-warning">في الانتظار</span>
-                                        @endif
-                                    </td>
-                                    <td>{{ $message->created_at->format('Y-m-d H:i') }}</td>
-                                    <td>
-                                        <a href="{{ route('admin.whatsapp-messages.show', $message) }}" class="btn btn-sm btn-info" title="عرض">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="7" class="text-center">لا توجد رسائل</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                    @include('admin.pages.whatsapp-messages.partials.pagination', ['messages' => $messages])
                 </div>
 
-                <div class="mt-3">
-                    {{ $messages->links() }}
-                </div>
             </div>
         </div>
     </div>
-</div>
 @stop
 
+@section('script')
+    @include('admin.components.premium.scripts')
+@stop

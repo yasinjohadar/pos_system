@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Controller;
+use App\Services\PermissionCatalogService;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
-use App\Http\Controllers\Controller;
 
 class RoleController extends Controller
 {
@@ -30,20 +31,22 @@ public function __construct()
 
     public function index()
         {
-            $permissions = Permission::all();
             $roles = Role::all();
-            return view("admin.pages.roles.index" , compact("roles" , "permissions"));
+            return view("admin.pages.roles.index", compact("roles"));
         }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(PermissionCatalogService $catalog)
     {
-        $permissions = Permission::all();
-        $roles = Role::all();
+        $permissions = Permission::orderBy('name')->get();
 
-       return view("admin.pages.roles.create" , compact("roles" , "permissions"));
+        return view('admin.pages.roles.create', [
+            'permissionGroups' => $catalog->getGrouped($permissions),
+            'permissionsTotal' => $catalog->getTotalCount($permissions),
+            'selectedPermissions' => [],
+        ]);
     }
 
     /**
@@ -71,13 +74,17 @@ public function __construct()
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(string $id, PermissionCatalogService $catalog)
     {
         $role = Role::findOrFail($id);
-         $permissions = Permission::all();
+        $permissions = Permission::orderBy('name')->get();
 
-
-       return view("admin.pages.roles.edit" , compact("role" , "permissions"));
+        return view('admin.pages.roles.edit', [
+            'role' => $role,
+            'permissionGroups' => $catalog->getGrouped($permissions),
+            'permissionsTotal' => $catalog->getTotalCount($permissions),
+            'selectedPermissions' => $role->permissions->pluck('name')->all(),
+        ]);
     }
 
     /**

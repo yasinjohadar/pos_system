@@ -29,7 +29,14 @@ class TreasuryController extends Controller
             $query->where('is_active', $request->boolean('is_active'));
         }
 
-        $treasuries = $query->paginate(15);
+        $treasuries = $query->paginate(15)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.sales.treasuries.partials.table-rows', compact('treasuries'))->render(),
+                'pagination' => view('admin.pages.sales.treasuries.partials.pagination', compact('treasuries'))->render(),
+            ]);
+        }
 
         return view('admin.pages.sales.treasuries.index', compact('treasuries'));
     }

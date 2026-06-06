@@ -18,21 +18,35 @@ class PromotionController extends Controller
         $this->middleware('permission:promotion-delete')->only('destroy');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $promotions = Promotion::withCount('items')
-            ->orderByDesc('is_active')
-            ->orderByDesc('id')
-            ->paginate(20);
+        $query = Promotion::withCount('items')->orderByDesc('is_active')->orderByDesc('id');
+
+        if ($request->filled('query')) {
+            $search = $request->input('query');
+            $query->where('name', 'like', "%{$search}%");
+        }
+        if ($request->filled('is_active')) {
+            $query->where('is_active', $request->boolean('is_active'));
+        }
+
+        $promotions = $query->paginate(20)->withQueryString();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.sales.promotions.partials.table-rows', compact('promotions'))->render(),
+                'pagination' => view('admin.pages.sales.promotions.partials.pagination', compact('promotions'))->render(),
+            ]);
+        }
 
         return view('admin.pages.sales.promotions.index', compact('promotions'));
     }
 
     public function create()
     {
-        $products = Product::where('is_active', true)->orderBy('name')->get();
-
-        return view('admin.pages.sales.promotions.create', compact('products'));
+        return view('admin.pages.sales.promotions.create', [
+            'oldProducts' => $this->resolveItemProducts(),
+        ]);
     }
 
     public function store(Request $request)
@@ -81,9 +95,11 @@ class PromotionController extends Controller
     public function edit(Promotion $promotion)
     {
         $promotion->load('items.product');
-        $products = Product::where('is_active', true)->orderBy('name')->get();
 
-        return view('admin.pages.sales.promotions.edit', compact('promotion', 'products'));
+        return view('admin.pages.sales.promotions.edit', [
+            'promotion' => $promotion,
+            'oldProducts' => $this->resolveItemProducts($promotion),
+        ]);
     }
 
     public function update(Request $request, Promotion $promotion)
@@ -137,6 +153,19 @@ class PromotionController extends Controller
 
         return redirect()->route('admin.promotions.index')
             ->with('success', 'تم حذف العرض بنجاح.');
+    }
+
+    private function resolveItemProducts(?Promotion $promotion = null)
+    {
+        $ids = collect(old('items', []))->pluck('product_id')->filter()->unique();
+
+        if ($ids->isEmpty() && $promotion) {
+            $ids = $promotion->items->pluck('product_id')->unique();
+        }
+
+        return $ids->isNotEmpty()
+            ? Product::whereIn('id', $ids)->get()->keyBy('id')
+            : collect();
     }
 }
 

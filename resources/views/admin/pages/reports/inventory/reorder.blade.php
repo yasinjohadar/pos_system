@@ -1,57 +1,54 @@
 @extends('admin.layouts.master')
 
 @section('page-title')
-تنبيهات إعادة طلب المخزون
+    تنبيهات إعادة طلب المخزون
+@stop
+
+@section('css')
+    @include('admin.components.premium.styles')
 @stop
 
 @section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
-            <div class="my-auto">
-                <h5 class="page-title fs-21 mb-1">تنبيهات إعادة طلب المخزون</h5>
-                <span class="text-muted fs-12">قائمة المنتجات التي وصل رصيدها إلى حد إعادة الطلب أو أقل.</span>
-            </div>
-        </div>
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
 
-        <div class="card">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-bordered mb-0">
-                        <thead>
-                        <tr>
-                            <th>المنتج</th>
-                            <th>التصنيف</th>
-                            <th>الرصيد الحالي (إجمالي كل المخازن)</th>
-                            <th>حد إعادة الطلب</th>
-                            <th>الحد الأقصى (إن وُجد)</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @forelse($rows as $row)
-                            @php
-                                $product = $row->product;
-                            @endphp
-                            <tr>
-                                <td>{{ $product?->name }}</td>
-                                <td>{{ $product?->category?->name }}</td>
-                                <td>{{ number_format($row->total_qty, 2) }}</td>
-                                <td>{{ number_format($product->reorder_level, 2) }}</td>
-                                <td>
-                                    {{ $product->max_level !== null ? number_format($product->max_level, 2) : '-' }}
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="text-center">لا توجد منتجات تحتاج إلى إعادة طلب حالياً.</td>
-                            </tr>
-                        @endforelse
-                        </tbody>
-                    </table>
+                @include('admin.components.premium.flash')
+
+                <div class="users-header">
+                    <div>
+                        <h5 class="users-page-title">تنبيهات إعادة طلب المخزون</h5>
+                        <p class="users-muted-text mb-0" style="margin-top: 0.35rem;">قائمة المنتجات التي وصل رصيدها إلى حد إعادة الطلب أو أقل.</p>
+                    </div>
+                    <a href="{{ route('admin.reports.inventory.index') }}" class="users-btn-secondary">
+                        <i class="fas fa-boxes"></i> تقرير المخزون الحالي
+                    </a>
                 </div>
+
+                <div class="users-table-card">
+                    <div class="table-responsive">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th style="min-width: 200px;">المنتج</th>
+                                    <th>التصنيف</th>
+                                    <th>الرصيد الحالي (إجمالي كل المخازن)</th>
+                                    <th>حد إعادة الطلب</th>
+                                    <th>الحد الأقصى</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @include('admin.pages.reports.inventory.partials.reorder-rows')
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
-</div>
 @stop
 
+@section('script')
+    @include('admin.components.premium.scripts')
+@stop

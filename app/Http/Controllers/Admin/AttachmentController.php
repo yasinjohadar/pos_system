@@ -27,14 +27,37 @@ class AttachmentController extends Controller
             $query->where('type', $request->type);
         }
         $attachments = $query->paginate(20)->withQueryString();
-        $types = [Attachment::TYPE_DOCUMENT => 'مستند', Attachment::TYPE_IMAGE => 'صورة', Attachment::TYPE_CONTRACT => 'عقد', Attachment::TYPE_ID_COPY => 'صورة هوية'];
-        $attachableTypes = [
+        $types = $this->attachmentTypeLabels();
+        $attachableTypes = $this->attachableTypeLabels();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.attachments.partials.table-rows', compact('attachments', 'types', 'attachableTypes'))->render(),
+                'pagination' => view('admin.pages.attachments.partials.pagination', compact('attachments'))->render(),
+            ]);
+        }
+
+        return view('admin.pages.attachments.index', compact('attachments', 'types', 'attachableTypes'));
+    }
+
+    private function attachmentTypeLabels(): array
+    {
+        return [
+            Attachment::TYPE_DOCUMENT => 'مستند',
+            Attachment::TYPE_IMAGE => 'صورة',
+            Attachment::TYPE_CONTRACT => 'عقد',
+            Attachment::TYPE_ID_COPY => 'صورة هوية',
+        ];
+    }
+
+    private function attachableTypeLabels(): array
+    {
+        return [
             \App\Models\SaleInvoice::class => 'فاتورة بيع',
             \App\Models\PurchaseInvoice::class => 'فاتورة شراء',
             \App\Models\Customer::class => 'عميل',
             \App\Models\Supplier::class => 'مورد',
         ];
-        return view('admin.pages.attachments.index', compact('attachments', 'types', 'attachableTypes'));
     }
 
     /**

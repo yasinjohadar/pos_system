@@ -34,6 +34,7 @@ class SegmentReportController extends Controller
                 $rows[] = (object) [
                     'segment_id' => $segment->id,
                     'segment_name' => $segment->name,
+                    'segment_color' => $segment->color,
                     'customer_count' => 0,
                     'total_sales' => 0,
                     'avg_balance' => 0,
@@ -65,6 +66,7 @@ class SegmentReportController extends Controller
             $rows[] = (object) [
                 'segment_id' => $segment->id,
                 'segment_name' => $segment->name,
+                'segment_color' => $segment->color,
                 'customer_count' => $customerCount,
                 'total_sales' => (float) $totalSales,
                 'avg_balance' => $customerCount > 0 ? round($balance / $customerCount, 2) : 0,
@@ -75,6 +77,13 @@ class SegmentReportController extends Controller
 
         if ($request->input('format') === 'csv') {
             return $this->csvResponse($rows);
+        }
+
+        if ($request->ajax()) {
+            return response()->json([
+                'summary' => view('admin.pages.reports.segments.partials.summary', compact('rows'))->render(),
+                'tbody' => view('admin.pages.reports.segments.partials.table-rows', compact('rows'))->render(),
+            ]);
         }
 
         return view('admin.pages.reports.segments.index', compact('rows'));

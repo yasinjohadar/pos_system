@@ -41,8 +41,15 @@ class StockMovementController extends Controller
             $query->whereDate('movement_date', '<=', $request->to_date);
         }
 
-        $movements = $query->paginate(20);
+        $movements = $query->paginate(20)->withQueryString();
         $warehouses = Warehouse::where('is_active', true)->orderBy('name')->get();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.stock.partials.movements-table-rows', compact('movements'))->render(),
+                'pagination' => view('admin.pages.stock.partials.pagination', ['paginator' => $movements])->render(),
+            ]);
+        }
 
         return view('admin.pages.stock.movements-index', compact('movements', 'warehouses'));
     }
@@ -53,9 +60,11 @@ class StockMovementController extends Controller
     public function create(Request $request)
     {
         $warehouses = Warehouse::where('is_active', true)->orderBy('name')->get();
-        $products = Product::where('is_active', true)->orderBy('name')->get();
+        $selectedProduct = old('product_id')
+            ? Product::find(old('product_id'))
+            : null;
 
-        return view('admin.pages.stock.movement-create', compact('warehouses', 'products'));
+        return view('admin.pages.stock.movement-create', compact('warehouses', 'selectedProduct'));
     }
 
     /**
@@ -117,8 +126,15 @@ class StockMovementController extends Controller
                 ->whereRaw('stock_balances.quantity <= (SELECT min_stock_alert FROM products WHERE products.id = stock_balances.product_id)');
         }
 
-        $balances = $query->paginate(25);
+        $balances = $query->paginate(25)->withQueryString();
         $warehouses = Warehouse::where('is_active', true)->orderBy('name')->get();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'tbody' => view('admin.pages.stock.partials.balances-table-rows', compact('balances'))->render(),
+                'pagination' => view('admin.pages.stock.partials.pagination', ['paginator' => $balances])->render(),
+            ]);
+        }
 
         return view('admin.pages.stock.balances-index', compact('balances', 'warehouses'));
     }

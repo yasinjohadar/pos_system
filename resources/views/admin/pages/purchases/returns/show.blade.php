@@ -4,109 +4,181 @@
     مرتجع الشراء {{ $purchaseReturn->return_number }}
 @stop
 
+@section('css')
+    @include('admin.components.premium.styles')
+@stop
+
 @section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
-            <div class="my-auto">
-                <h5 class="page-title fs-21 mb-1">مرتجع الشراء: {{ $purchaseReturn->return_number }}</h5>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-                @if($purchaseReturn->status === \App\Models\PurchaseReturn::STATUS_PENDING)
-                    @can('purchase-return-complete')
-                    <form action="{{ route('admin.purchase-returns.complete', $purchaseReturn) }}" method="POST" class="d-inline" onsubmit="return confirm('إكمال المرتجع س يصرف الكميات من المخزون. متابعة؟');">
-                        @csrf
-                        <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-check me-1"></i> إكمال المرتجع</button>
-                    </form>
-                    @endcan
-                @endif
-                <a href="{{ route('admin.purchase-returns.index') }}" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-right me-1"></i> رجوع</a>
-                <a href="{{ route('admin.purchase-invoices.show', $purchaseReturn->purchase_invoice_id) }}" class="btn btn-outline-info btn-sm">الفاتورة الأصلية</a>
-            </div>
-        </div>
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
 
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-        @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
+                @include('admin.components.premium.flash')
 
-        <div class="row">
-            <div class="col-lg-8">
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header"><h6 class="mb-0">بيانات المرتجع</h6></div>
-                    <div class="card-body">
-                        <table class="table table-borderless mb-0">
-                            <tr><td class="text-muted">الفاتورة الأصلية:</td><td><a href="{{ route('admin.purchase-invoices.show', $purchaseReturn->purchaseInvoice) }}">{{ $purchaseReturn->purchaseInvoice->number ?? '—' }}</a></td></tr>
-                            <tr><td class="text-muted">مخزن الصرف:</td><td>{{ $purchaseReturn->warehouse->name ?? '—' }}</td></tr>
-                            <tr><td class="text-muted">تاريخ المرتجع:</td><td>{{ $purchaseReturn->return_date->format('Y-m-d') }}</td></tr>
-                            <tr><td class="text-muted">الحالة:</td>
-                                <td>
-                                    @if($purchaseReturn->status === 'pending')
-                                        <span class="badge bg-warning">قيد الانتظار</span>
-                                    @elseif($purchaseReturn->status === 'completed')
-                                        <span class="badge bg-success">مكتمل</span>
-                                    @else
-                                        <span class="badge bg-danger">ملغى</span>
-                                    @endif
-                                </td>
-                            </tr>
-                            <tr><td class="text-muted">المستخدم:</td><td>{{ $purchaseReturn->user->name ?? '—' }}</td></tr>
-                            @if($purchaseReturn->notes)
-                            <tr><td class="text-muted">ملاحظات:</td><td>{{ $purchaseReturn->notes }}</td></tr>
-                            @endif
-                        </table>
+                <div class="users-header">
+                    <h5 class="users-page-title">مرتجع الشراء: {{ $purchaseReturn->return_number }}</h5>
+                    <div class="users-header-actions">
+                        @if ($purchaseReturn->status === \App\Models\PurchaseReturn::STATUS_PENDING)
+                            @can('purchase-return-complete')
+                                <form action="{{ route('admin.purchase-returns.complete', $purchaseReturn) }}" method="POST" class="d-inline"
+                                    onsubmit="return confirm('إكمال المرتجع سيصرف الكميات من المخزون. متابعة؟');">
+                                    @csrf
+                                    <button type="submit" class="users-btn-submit" style="padding: 0.5rem 1rem;">
+                                        <i class="fas fa-check"></i> إكمال المرتجع
+                                    </button>
+                                </form>
+                            @endcan
+                        @endif
+                        <a href="{{ route('admin.purchase-invoices.show', $purchaseReturn->purchase_invoice_id) }}" class="users-btn-secondary">
+                            <i class="fas fa-file-invoice"></i> الفاتورة الأصلية
+                        </a>
+                        <a href="{{ route('admin.purchase-returns.index') }}" class="users-btn-secondary">
+                            <i class="fas fa-arrow-right"></i> رجوع
+                        </a>
                     </div>
                 </div>
 
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header"><h6 class="mb-0">بنود المرتجع</h6></div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-striped table-bordered mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>المنتج</th>
-                                        <th>الكمية</th>
-                                        <th>سعر الوحدة</th>
-                                        <th>الإجمالي</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($purchaseReturn->items as $item)
-                                        <tr>
-                                            <td>{{ $item->product->name ?? '—' }}</td>
-                                            <td>{{ $item->quantity }}</td>
-                                            <td>{{ number_format($item->unit_price, 2) }}</td>
-                                            <td>{{ number_format($item->total, 2) }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                <div class="users-detail-grid">
+                    <div class="users-detail-card">
+                        <div class="users-detail-card__header">
+                            <h6 class="users-detail-card__title"><i class="fas fa-info-circle"></i> بيانات المرتجع</h6>
+                        </div>
+                        <div class="users-detail-card__body">
+                            <div class="users-detail-list">
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-receipt"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">الفاتورة الأصلية</span>
+                                        <div class="users-detail-item__value">
+                                            <a href="{{ route('admin.purchase-invoices.show', $purchaseReturn->purchaseInvoice) }}" class="users-user-name">
+                                                {{ $purchaseReturn->purchaseInvoice->number ?? '—' }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-warehouse"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">مخزن الصرف</span>
+                                        <div class="users-detail-item__value">{{ $purchaseReturn->warehouse->name ?? '—' }}</div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-calendar"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">تاريخ المرتجع</span>
+                                        <div class="users-detail-item__value">{{ $purchaseReturn->return_date->format('Y-m-d') }}</div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-flag"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">الحالة</span>
+                                        <div class="users-detail-item__value">
+                                            @if ($purchaseReturn->status === 'pending')
+                                                <span class="users-badge users-badge--role" style="background: rgba(245, 158, 11, 0.15); color: #d97706;">قيد الانتظار</span>
+                                            @elseif ($purchaseReturn->status === 'completed')
+                                                <span class="users-badge users-badge--active">مكتمل</span>
+                                            @else
+                                                <span class="users-badge users-badge--inactive">ملغى</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-user"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">المستخدم</span>
+                                        <div class="users-detail-item__value">{{ $purchaseReturn->user->name ?? '—' }}</div>
+                                    </div>
+                                </div>
+                                @if ($purchaseReturn->notes)
+                                    <div class="users-detail-item">
+                                        <div class="users-detail-item__icon"><i class="fas fa-sticky-note"></i></div>
+                                        <div class="users-detail-item__content">
+                                            <span class="users-detail-item__label">ملاحظات</span>
+                                            <div class="users-detail-item__value">{{ $purchaseReturn->notes }}</div>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="users-detail-card">
+                        <div class="users-detail-card__header">
+                            <h6 class="users-detail-card__title"><i class="fas fa-calculator"></i> الإجماليات</h6>
+                        </div>
+                        <div class="users-detail-card__body">
+                            <div class="users-detail-list">
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-coins"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">المجموع المرتجع</span>
+                                        <div class="users-detail-item__value"><span class="users-amount">{{ number_format($purchaseReturn->subtotal_refund, 2) }}</span></div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-percent"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">الضريبة</span>
+                                        <div class="users-detail-item__value"><span class="users-amount">{{ number_format($purchaseReturn->tax_refund, 2) }}</span></div>
+                                    </div>
+                                </div>
+                                <div class="users-detail-item">
+                                    <div class="users-detail-item__icon"><i class="fas fa-money-bill-wave"></i></div>
+                                    <div class="users-detail-item__content">
+                                        <span class="users-detail-item__label">الإجمالي المرتجع</span>
+                                        <div class="users-detail-item__value"><span class="users-amount" style="font-size: 1rem;">{{ number_format($purchaseReturn->total_refund, 2) }}</span></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-lg-4">
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-header"><h6 class="mb-0">الإجماليات</h6></div>
-                    <div class="card-body">
-                        <table class="table table-borderless mb-0">
-                            <tr><td>المجموع المرتجع:</td><td class="text-end">{{ number_format($purchaseReturn->subtotal_refund, 2) }}</td></tr>
-                            <tr><td>الضريبة:</td><td class="text-end">{{ number_format($purchaseReturn->tax_refund, 2) }}</td></tr>
-                            <tr><th>الإجمالي المرتجع:</th><td class="text-end"><strong>{{ number_format($purchaseReturn->total_refund, 2) }}</strong></td></tr>
+
+                <div class="users-table-card" style="margin-top: 1.25rem;">
+                    <div class="users-form-card__header" style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--users-border);">
+                        <h6 class="users-form-card__title" style="margin: 0;"><i class="fas fa-list"></i> بنود المرتجع</h6>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th>المنتج</th>
+                                    <th>الكمية</th>
+                                    <th>سعر الوحدة</th>
+                                    <th>الإجمالي</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($purchaseReturn->items as $item)
+                                    <tr>
+                                        <td>
+                                            <div class="users-user-cell">
+                                                <div class="users-avatar"><i class="fas fa-box"></i></div>
+                                                <span class="users-user-name" style="cursor: default;">{{ $item->product->name ?? '—' }}</span>
+                                            </div>
+                                        </td>
+                                        <td><span class="users-badge users-badge--role">{{ $item->quantity }}</span></td>
+                                        <td><span class="users-amount">{{ number_format($item->unit_price, 2) }}</span></td>
+                                        <td><span class="users-amount">{{ number_format($item->total, 2) }}</span></td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="users-empty">لا توجد بنود</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
                         </table>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
-</div>
+@stop
+
+@section('script')
+    @include('admin.components.premium.scripts')
 @stop

@@ -1,253 +1,576 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Laravel') }} - {{ __('Register') }}</title>
+    <title>{{ config('app.name', 'Laravel') }} - إنشاء حساب</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@600;700;800&family=Cairo:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --font-body: "Cairo", sans-serif;
+            --font-heading: "Alexandria", sans-serif;
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --primary-hover: #4338ca;
+            --surface: #ffffff;
+            --bg: #f8fafc;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --error: #dc2626;
+            --radius: 12px;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
-            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-            background-color: #f3f4f6;
-            color: #111827;
+            font-family: var(--font-body);
+            background-color: var(--bg);
+            color: var(--text);
             min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        h1, h2, .brand-headline, .brand-logo-text strong, .form-header h1 {
+            font-family: var(--font-heading);
+        }
+
+        .auth-page {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 100vh;
+        }
+
+        /* ── Brand Panel ── */
+        .brand-panel {
+            position: relative;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            align-items: center;
-            padding: 1rem;
+            padding: 3rem;
+            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 50%, #312e81 100%);
+            color: #ffffff;
+            overflow: hidden;
         }
-        .container {
-            width: 100%;
+
+        .brand-panel::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cpath d='M0 60V0h60v60H0z' fill='none'/%3E%3Cpath d='M0 0h60M0 15h60M0 30h60M0 45h60M15 0v60M30 0v60M45 0v60' stroke='%23ffffff' stroke-width='0.5' opacity='0.07'/%3E%3C/svg%3E");
+            pointer-events: none;
+        }
+
+        .brand-content {
+            position: relative;
+            z-index: 1;
             max-width: 28rem;
-            margin-top: 1.5rem;
         }
-        .logo-container {
-            text-align: center;
-            margin-bottom: 1.5rem;
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+            text-decoration: none;
+            color: inherit;
         }
-        .logo-container a {
-            display: inline-block;
+
+        .brand-logo svg {
+            width: 3.5rem;
+            height: 3.5rem;
+            flex-shrink: 0;
         }
-        .form-container {
-            background-color: #ffffff;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+
+        .brand-logo-text {
+            display: flex;
+            flex-direction: column;
         }
-        .form-group {
-            margin-bottom: 1rem;
+
+        .brand-logo-text strong {
+            font-size: 1.375rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
         }
-        .form-group:last-of-type {
-            margin-bottom: 0;
+
+        .brand-logo-text span {
+            font-size: 0.8125rem;
+            opacity: 0.8;
+            margin-top: 0.125rem;
         }
-        label {
-            display: block;
-            font-weight: 500;
+
+        .brand-headline {
+            font-size: 1.75rem;
+            font-weight: 700;
+            line-height: 1.35;
+            margin-bottom: 0.75rem;
+        }
+
+        .brand-subheadline {
+            font-size: 1rem;
+            opacity: 0.85;
+            margin-bottom: 2.5rem;
+            line-height: 1.7;
+        }
+
+        .brand-features {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .brand-features li {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.9375rem;
+        }
+
+        .feature-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.75rem;
+            height: 2.75rem;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            flex-shrink: 0;
+            backdrop-filter: blur(4px);
+        }
+
+        .feature-icon svg {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+
+        /* ── Form Panel ── */
+        .form-panel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background-color: var(--bg);
+        }
+
+        .form-card {
+            width: 100%;
+            max-width: 26rem;
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow:
+                0 1px 3px rgba(0, 0, 0, 0.04),
+                0 4px 16px rgba(0, 0, 0, 0.06),
+                0 0 0 1px rgba(0, 0, 0, 0.03);
+        }
+
+        .form-header {
+            margin-bottom: 2rem;
+        }
+
+        .form-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.375rem;
+        }
+
+        .form-header p {
             font-size: 0.875rem;
-            color: #374151;
-            margin-bottom: 0.25rem;
+            color: var(--text-muted);
         }
-        input[type="text"],
-        input[type="email"],
-        input[type="password"] {
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper .field-icon {
+            position: absolute;
+            top: 50%;
+            right: 0.875rem;
+            transform: translateY(-50%);
+            width: 1.125rem;
+            height: 1.125rem;
+            color: var(--text-muted);
+            pointer-events: none;
+            transition: color 0.2s ease;
+        }
+
+        .input-wrapper input {
             display: block;
             width: 100%;
-            margin-top: 0.25rem;
-            padding: 0.5rem 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
-            font-size: 0.875rem;
-            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            padding: 0.75rem 2.75rem 0.75rem 1rem;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.9375rem;
+            font-family: inherit;
+            color: var(--text);
+            background: var(--surface);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
-        input[type="text"]:focus,
-        input[type="email"]:focus,
-        input[type="password"]:focus {
+
+        .input-wrapper input::placeholder {
+            color: #94a3b8;
+        }
+
+        .input-wrapper input:focus {
             outline: none;
-            border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
         }
+
+        .input-wrapper input:focus + .field-icon,
+        .input-wrapper:focus-within .field-icon {
+            color: var(--primary);
+        }
+
+        .input-wrapper input.input-error {
+            border-color: var(--error);
+        }
+
+        .input-wrapper input.input-error:focus {
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+        }
+
         .error-messages {
-            font-size: 0.875rem;
-            color: #dc2626;
-            margin-top: 0.5rem;
+            font-size: 0.8125rem;
+            color: var(--error);
+            margin-top: 0.375rem;
         }
+
         .error-messages ul {
             list-style: none;
             padding: 0;
         }
+
         .error-messages li {
             margin-top: 0.25rem;
         }
-        .form-actions {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            margin-top: 1rem;
+
+        .btn-submit {
+            display: block;
+            width: 100%;
+            padding: 0.875rem 1.5rem;
+            margin-top: 0.5rem;
+            background-color: var(--primary);
+            color: #ffffff;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
         }
-        .form-actions a {
+
+        .btn-submit:hover {
+            background-color: var(--primary-hover);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+        }
+
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+
+        .btn-submit:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.4);
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 1.5rem;
             font-size: 0.875rem;
-            color: #4b5563;
+            color: var(--text-muted);
+        }
+
+        .form-footer a {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .form-footer a:hover {
+            color: var(--primary-hover);
             text-decoration: underline;
             text-underline-offset: 2px;
         }
-        .form-actions a:hover {
-            color: #111827;
+
+        .form-footer a:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+            border-radius: 2px;
         }
-        .form-actions a:focus {
-            outline: none;
-            border-radius: 0.375rem;
-            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+
+        /* ── Responsive ── */
+        @media (max-width: 991px) {
+            .auth-page {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+
+            .brand-panel {
+                padding: 2rem;
+            }
+
+            .brand-headline {
+                font-size: 1.375rem;
+            }
+
+            .brand-subheadline {
+                margin-bottom: 1.5rem;
+            }
         }
-        button[type="submit"] {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.5rem 1rem;
-            background-color: #1f2937;
-            border: 1px solid transparent;
-            border-radius: 0.375rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #ffffff;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            cursor: pointer;
-            transition: background-color 0.15s ease-in-out;
-            margin-left: 1rem;
-        }
-        button[type="submit"]:hover {
-            background-color: #374151;
-        }
-        button[type="submit"]:focus {
-            outline: none;
-            background-color: #374151;
-            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
-        }
-        button[type="submit"]:active {
-            background-color: #111827;
-        }
-        @media (prefers-color-scheme: dark) {
-            body {
-                background-color: #111827;
-                color: #f9fafb;
+
+        @media (max-width: 767px) {
+            .brand-panel {
+                padding: 1.5rem;
             }
-            .form-container {
-                background-color: #1f2937;
+
+            .brand-logo {
+                margin-bottom: 1rem;
             }
-            label {
-                color: #d1d5db;
+
+            .brand-headline {
+                font-size: 1.125rem;
+                margin-bottom: 0;
             }
-            input[type="text"],
-            input[type="email"],
-            input[type="password"] {
-                background-color: #374151;
-                border-color: #4b5563;
-                color: #f9fafb;
+
+            .brand-subheadline,
+            .brand-features {
+                display: none;
             }
-            input[type="text"]:focus,
-            input[type="email"]:focus,
-            input[type="password"]:focus {
-                border-color: #6366f1;
+
+            .form-panel {
+                padding: 1.25rem;
             }
-            .form-actions a {
-                color: #9ca3af;
-            }
-            .form-actions a:hover {
-                color: #f9fafb;
+
+            .form-card {
+                padding: 1.75rem;
+                border-radius: 12px;
+                box-shadow:
+                    0 1px 3px rgba(0, 0, 0, 0.04),
+                    0 2px 8px rgba(0, 0, 0, 0.05);
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo-container">
-            <a href="/">
-                <svg viewBox="0 0 316 316" xmlns="http://www.w3.org/2000/svg" class="w-20 h-20" style="width: 5rem; height: 5rem; fill: currentColor; color: #6b7280;">
-                    <path d="M305.8 81.125C305.77 80.995 305.69 80.885 305.65 80.755C305.56 80.525 305.49 80.285 305.37 80.075C305.29 79.935 305.17 79.815 305.07 79.685C304.94 79.515 304.83 79.325 304.68 79.175C304.55 79.045 304.39 78.955 304.25 78.845C304.09 78.715 303.95 78.575 303.77 78.475L251.32 48.275C249.97 47.495 248.31 47.495 246.96 48.275L194.51 78.475C194.33 78.575 194.19 78.725 194.03 78.845C193.89 78.955 193.73 79.045 193.6 79.175C193.45 79.325 193.34 79.515 193.21 79.685C193.11 79.815 192.99 79.935 192.91 80.075C192.79 80.285 192.71 80.525 192.63 80.755C192.58 80.875 192.51 80.995 192.48 81.125C192.38 81.495 192.33 81.875 192.33 82.265V139.625L148.62 164.795V52.575C148.62 52.185 148.57 51.805 148.47 51.435C148.44 51.305 148.36 51.195 148.32 51.065C148.23 50.835 148.16 50.595 148.04 50.385C147.96 50.245 147.84 50.125 147.74 49.995C147.61 49.825 147.5 49.635 147.35 49.485C147.22 49.355 147.06 49.265 146.92 49.155C146.76 49.025 146.62 48.885 146.44 48.785L93.99 18.585C92.64 17.805 90.98 17.805 89.63 18.585L37.18 48.785C37 48.885 36.86 49.035 36.7 49.155C36.56 49.265 36.4 49.355 36.27 49.485C36.12 49.635 36.01 49.825 35.88 49.995C35.78 50.125 35.66 50.245 35.58 50.385C35.46 50.595 35.38 50.835 35.3 51.065C35.25 51.185 35.18 51.305 35.15 51.435C35.05 51.805 35 52.185 35 52.575V232.235C35 233.795 35.84 235.245 37.19 236.025L142.1 296.425C142.33 296.555 142.58 296.635 142.82 296.725C142.93 296.765 143.04 296.835 143.16 296.865C143.53 296.965 143.9 297.015 144.28 297.015C144.66 297.015 145.03 296.965 145.4 296.865C145.5 296.835 145.59 296.775 145.69 296.745C145.95 296.655 146.21 296.565 146.45 296.435L251.36 236.035C252.72 235.255 253.55 233.815 253.55 232.245V174.885L303.81 145.945C305.17 145.165 306 143.725 306 142.155V82.265C305.95 81.875 305.89 81.495 305.8 81.125ZM144.2 227.205L100.57 202.515L146.39 176.135L196.66 147.195L240.33 172.335L208.29 190.625L144.2 227.205ZM244.75 114.995V164.795L226.39 154.225L201.03 139.625V89.825L219.39 100.395L244.75 114.995ZM249.12 57.105L292.81 82.265L249.12 107.425L205.43 82.265L249.12 57.105ZM114.49 184.425L96.13 194.995V85.305L121.49 70.705L139.85 60.135V169.815L114.49 184.425ZM91.76 27.425L135.45 52.585L91.76 77.745L48.07 52.585L91.76 27.425ZM43.67 60.135L62.03 70.705L87.39 85.305V202.545V202.555V202.565C87.39 202.735 87.44 202.895 87.46 203.055C87.49 203.265 87.49 203.485 87.55 203.695V203.705C87.6 203.875 87.69 204.035 87.76 204.195C87.84 204.375 87.89 204.575 87.99 204.745C87.99 204.745 87.99 204.755 88 204.755C88.09 204.905 88.22 205.035 88.33 205.175C88.45 205.335 88.55 205.495 88.69 205.635L88.7 205.645C88.82 205.765 88.98 205.855 89.12 205.965C89.28 206.085 89.42 206.225 89.59 206.325C89.6 206.325 89.6 206.325 89.61 206.335C89.62 206.335 89.62 206.345 89.63 206.345L139.87 234.775V285.065L43.67 229.705V60.135ZM244.75 229.705L148.58 285.075V234.775L219.8 194.115L244.75 179.875V229.705ZM297.2 139.625L253.49 164.795V114.995L278.85 100.395L297.21 89.825V139.625H297.2Z"/>
-                </svg>
-            </a>
-        </div>
+    <div class="auth-page">
 
-        <div class="form-container">
-            <form method="POST" action="{{ route('register') }}">
-                @csrf
+        {{-- Brand Panel (right side in RTL) --}}
+        <aside class="brand-panel">
+            <div class="brand-content">
+                <a href="/" class="brand-logo">
+                    <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <rect width="56" height="56" rx="14" fill="rgba(255,255,255,0.15)"/>
+                        <rect x="14" y="12" width="28" height="32" rx="3" stroke="white" stroke-width="2" fill="none"/>
+                        <line x1="20" y1="20" x2="36" y2="20" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="20" y1="26" x2="32" y2="26" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+                        <line x1="20" y1="32" x2="36" y2="32" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+                        <rect x="30" y="36" width="10" height="8" rx="1" fill="white" opacity="0.9"/>
+                        <text x="35" y="42" text-anchor="middle" fill="#4f46e5" font-size="6" font-weight="bold" font-family="Arial">$</text>
+                    </svg>
+                    <div class="brand-logo-text">
+                        <strong>{{ config('app.name', 'Laravel') }}</strong>
+                        <span>نظام نقاط البيع والمحاسبة</span>
+                    </div>
+                </a>
 
-                <!-- Name -->
-                <div class="form-group">
-                    <label for="name">{{ __('Name') }}</label>
-                    <input id="name" type="text" name="name" value="{{ old('name') }}" required autofocus autocomplete="name" />
-                    @if ($errors->get('name'))
-                        <div class="error-messages">
-                            <ul>
-                                @foreach ((array) $errors->get('name') as $message)
-                                    <li>{{ $message }}</li>
-                                @endforeach
-                            </ul>
+                <h2 class="brand-headline">ابدأ إدارة أعمالك بذكاء</h2>
+                <p class="brand-subheadline">انضم إلى آلاف التجار الذين يديرون مبيعاتهم ومخزونهم وحساباتهم من مكان واحد.</p>
+
+                <ul class="brand-features">
+                    <li>
+                        <span class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                            </svg>
+                        </span>
+                        فواتير ومبيعات دقيقة
+                    </li>
+                    <li>
+                        <span class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <line x1="18" y1="20" x2="18" y2="10"/>
+                                <line x1="12" y1="20" x2="12" y2="4"/>
+                                <line x1="6" y1="20" x2="6" y2="14"/>
+                            </svg>
+                        </span>
+                        تقارير مالية فورية
+                    </li>
+                    <li>
+                        <span class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                                <line x1="12" y1="22.08" x2="12" y2="12"/>
+                            </svg>
+                        </span>
+                        مخزون وحسابات متكاملة
+                    </li>
+                </ul>
+            </div>
+        </aside>
+
+        {{-- Form Panel (left side in RTL) --}}
+        <main class="form-panel">
+            <div class="form-card">
+                <div class="form-header">
+                    <h1>إنشاء حساب جديد</h1>
+                    <p>أدخل بياناتك للوصول إلى لوحة التحكم</p>
+                </div>
+
+                <form method="POST" action="{{ route('register') }}">
+                    @csrf
+
+                    <div class="form-group">
+                        <label for="name">الاسم الكامل</label>
+                        <div class="input-wrapper">
+                            <input
+                                id="name"
+                                type="text"
+                                name="name"
+                                value="{{ old('name') }}"
+                                placeholder="أدخل اسمك الكامل"
+                                required
+                                autofocus
+                                autocomplete="name"
+                                @class(['input-error' => $errors->has('name')])
+                            />
+                            <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
                         </div>
-                    @endif
-                </div>
+                        @if ($errors->has('name'))
+                            <div class="error-messages">
+                                <ul>
+                                    @foreach ((array) $errors->get('name') as $message)
+                                        <li>{{ $message }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                    </div>
 
-                <!-- Email Address -->
-                <div class="form-group">
-                    <label for="email">{{ __('Email') }}</label>
-                    <input id="email" type="email" name="email" value="{{ old('email') }}" required autocomplete="username" />
-                    @if ($errors->get('email'))
-                        <div class="error-messages">
-                            <ul>
-                                @foreach ((array) $errors->get('email') as $message)
-                                    <li>{{ $message }}</li>
-                                @endforeach
-                            </ul>
+                    <div class="form-group">
+                        <label for="email">البريد الإلكتروني</label>
+                        <div class="input-wrapper">
+                            <input
+                                id="email"
+                                type="email"
+                                name="email"
+                                value="{{ old('email') }}"
+                                placeholder="example@email.com"
+                                required
+                                autocomplete="username"
+                                @class(['input-error' => $errors->has('email')])
+                            />
+                            <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                <polyline points="22,6 12,13 2,6"/>
+                            </svg>
                         </div>
-                    @endif
-                </div>
+                        @if ($errors->has('email'))
+                            <div class="error-messages">
+                                <ul>
+                                    @foreach ((array) $errors->get('email') as $message)
+                                        <li>{{ $message }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                    </div>
 
-                <!-- Password -->
-                <div class="form-group">
-                    <label for="password">{{ __('Password') }}</label>
-                    <input id="password" type="password" name="password" required autocomplete="new-password" />
-                    @if ($errors->get('password'))
-                        <div class="error-messages">
-                            <ul>
-                                @foreach ((array) $errors->get('password') as $message)
-                                    <li>{{ $message }}</li>
-                                @endforeach
-                            </ul>
+                    <div class="form-group">
+                        <label for="password">كلمة المرور</label>
+                        <div class="input-wrapper">
+                            <input
+                                id="password"
+                                type="password"
+                                name="password"
+                                placeholder="أدخل كلمة مرور قوية"
+                                required
+                                autocomplete="new-password"
+                                @class(['input-error' => $errors->has('password')])
+                            />
+                            <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            </svg>
                         </div>
-                    @endif
-                </div>
+                        @if ($errors->has('password'))
+                            <div class="error-messages">
+                                <ul>
+                                    @foreach ((array) $errors->get('password') as $message)
+                                        <li>{{ $message }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                    </div>
 
-                <!-- Confirm Password -->
-                <div class="form-group">
-                    <label for="password_confirmation">{{ __('Confirm Password') }}</label>
-                    <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password" />
-                    @if ($errors->get('password_confirmation'))
-                        <div class="error-messages">
-                            <ul>
-                                @foreach ((array) $errors->get('password_confirmation') as $message)
-                                    <li>{{ $message }}</li>
-                                @endforeach
-                            </ul>
+                    <div class="form-group">
+                        <label for="password_confirmation">تأكيد كلمة المرور</label>
+                        <div class="input-wrapper">
+                            <input
+                                id="password_confirmation"
+                                type="password"
+                                name="password_confirmation"
+                                placeholder="أعد إدخال كلمة المرور"
+                                required
+                                autocomplete="new-password"
+                                @class(['input-error' => $errors->has('password_confirmation')])
+                            />
+                            <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
                         </div>
-                    @endif
-                </div>
+                        @if ($errors->has('password_confirmation'))
+                            <div class="error-messages">
+                                <ul>
+                                    @foreach ((array) $errors->get('password_confirmation') as $message)
+                                        <li>{{ $message }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                    </div>
 
-                <div class="form-actions">
-                    <a href="{{ route('login') }}">
-                        {{ __('Already registered?') }}
-                    </a>
+                    <button type="submit" class="btn-submit">إنشاء الحساب</button>
+                </form>
 
-                    <button type="submit">
-                        {{ __('Register') }}
-                    </button>
-                </div>
-            </form>
-        </div>
+                <p class="form-footer">
+                    لديك حساب؟ <a href="{{ route('login') }}">سجّل الدخول</a>
+                </p>
+            </div>
+        </main>
+
     </div>
 </body>
 </html>

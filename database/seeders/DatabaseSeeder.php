@@ -20,7 +20,13 @@ class DatabaseSeeder extends Seeder
             PaymentMethodSeeder::class,
             TreasurySeeder::class,
             LargeMasterDataSeeder::class,
+            StockSeeder::class,
+            SalesSeeder::class,
+            PurchaseSeeder::class,
             ChartOfAccountSeeder::class,
+            FiscalYearSeeder::class,
+            CashVoucherSeeder::class,
+            AttachmentSeeder::class,
         ]);
 
         // إنشاء مستخدم تجريبي إضافي

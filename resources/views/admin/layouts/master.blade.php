@@ -18,6 +18,9 @@
     
     @yield('css')
     @yield('styles')
+    @stack('styles')
+    <link rel="stylesheet" href="{{ asset('assets/css/delete-modal.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/password-modal.css') }}">
 </head>
 
 <body>
