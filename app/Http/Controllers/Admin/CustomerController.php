@@ -116,7 +116,10 @@ class CustomerController extends Controller
 
     public function show(Customer $customer)
     {
-        $customer->load(['saleInvoices' => fn ($q) => $q->latest()->limit(20)]);
+        $customer->load([
+            'segment',
+            'saleInvoices' => fn ($q) => $q->latest()->limit(20),
+        ]);
         return view('admin.pages.sales.customers.show', compact('customer'));
     }
 

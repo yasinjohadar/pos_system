@@ -4,92 +4,121 @@
     كشف حساب العميل: {{ $customer->name }}
 @stop
 
+@section('css')
+    @include('admin.components.premium.styles')
+@stop
+
 @section('content')
-<div class="main-content app-content">
-    <div class="container-fluid">
-        <div class="d-md-flex d-block align-items-center justify-content-between my-4 page-header-breadcrumb">
-            <div class="my-auto">
-                <h5 class="page-title fs-21 mb-1">كشف حساب العميل: {{ $customer->name }}</h5>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <a href="{{ route('admin.customers.show', $customer) }}" class="btn btn-secondary btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i> رجوع
-                </a>
-            </div>
-        </div>
+    <div class="main-content app-content">
+        <div class="container-fluid p-0">
+            <div class="users-premium">
 
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-body">
-                <form method="GET" class="row g-3 align-items-end">
-                    <div class="col-md-4">
-                        <label class="form-label">رصيد حتى تاريخ (اختياري)</label>
-                        <input type="date" name="as_of_date" class="form-control" value="{{ $asOfDate?->format('Y-m-d') }}">
+                @include('admin.components.premium.flash')
+
+                <div class="users-header">
+                    <h5 class="users-page-title">كشف حساب العميل: {{ $customer->name }}</h5>
+                    <div class="users-header-actions">
+                        <a href="{{ route('admin.customers.show', $customer) }}" class="users-btn-secondary">
+                            <i class="fas fa-arrow-right"></i>
+                            رجوع
+                        </a>
                     </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-filter me-1"></i> عرض</button>
+                </div>
+
+                <div class="users-filters-card">
+                    <form method="GET" action="{{ route('admin.customers.statement', $customer) }}" class="users-filters-form">
+                        <input type="date" name="as_of_date" class="users-search-input users-filter-date"
+                            value="{{ $asOfDate?->format('Y-m-d') }}" title="رصيد حتى تاريخ">
+                        <button type="submit" class="users-btn-filter users-btn-filter--search">
+                            <i class="fas fa-filter me-1"></i> عرض
+                        </button>
+                        @if ($asOfDate)
+                            <a href="{{ route('admin.customers.statement', $customer) }}" class="users-btn-filter users-btn-filter--clear">
+                                <i class="fas fa-times me-1"></i> عرض الكل
+                            </a>
+                        @endif
+                    </form>
+                </div>
+
+                <div class="users-table-card">
+                    <div class="users-detail-card__header">
+                        <h6 class="users-detail-card__title">
+                            <i class="fas fa-list-alt"></i>
+                            حركات الحساب
+                        </h6>
+                        <span class="users-badge users-badge--role">
+                            رصيد افتتاحي: {{ number_format($customer->opening_balance, 2) }}
+                        </span>
                     </div>
-                    @if($asOfDate)
-                    <div class="col-md-2">
-                        <a href="{{ route('admin.customers.statement', $customer) }}" class="btn btn-outline-secondary">عرض الكل</a>
+                    <div class="table-responsive">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th>التاريخ</th>
+                                    <th>النوع</th>
+                                    <th>المرجع</th>
+                                    <th>البيان</th>
+                                    <th>مدين</th>
+                                    <th>دائن</th>
+                                    <th>الرصيد</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($entries as $e)
+                                    <tr>
+                                        <td>{{ $e['date']->format('Y-m-d') }}</td>
+                                        <td>
+                                            @if ($e['type'] === 'invoice')
+                                                <span class="users-badge users-badge--role">فاتورة</span>
+                                            @elseif ($e['type'] === 'return')
+                                                <span class="users-badge users-badge--inactive">مرتجع</span>
+                                            @else
+                                                <span class="users-badge users-badge--active">دفعة</span>
+                                            @endif
+                                        </td>
+                                        <td dir="ltr">{{ $e['reference'] }}</td>
+                                        <td>{{ $e['description'] }}</td>
+                                        <td>
+                                            @if ($e['debit'] > 0)
+                                                <span class="users-amount users-qty--out">{{ number_format($e['debit'], 2) }}</span>
+                                            @else
+                                                <span class="users-muted-text">—</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if ($e['credit'] > 0)
+                                                <span class="users-amount users-qty--in">{{ number_format($e['credit'], 2) }}</span>
+                                            @else
+                                                <span class="users-muted-text">—</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            <span class="users-amount"><strong>{{ number_format($e['balance'], 2) }}</strong></span>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="7" class="users-empty">
+                                            لا توجد حركات لهذا العميل{{ $asOfDate ? ' حتى التاريخ المحدد' : '' }}.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
+                    @if ($entries->isNotEmpty())
+                        <div class="users-detail-card__header" style="border-top: 1px solid var(--users-border); border-bottom: 0;">
+                            <span><strong>الرصيد الحالي:</strong></span>
+                            <span class="users-amount users-qty--out">{{ number_format($entries->last()['balance'], 2) }}</span>
+                        </div>
                     @endif
-                </form>
-            </div>
-        </div>
+                </div>
 
-        <div class="card shadow-sm border-0">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">حركات الحساب</h6>
-                <span class="badge bg-secondary">رصيد افتتاحي: {{ number_format($customer->opening_balance, 2) }}</span>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-striped table-bordered mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>التاريخ</th>
-                                <th>النوع</th>
-                                <th>المرجع</th>
-                                <th>البيان</th>
-                                <th class="text-end">مدين</th>
-                                <th class="text-end">دائن</th>
-                                <th class="text-end">الرصيد</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($entries as $e)
-                                <tr>
-                                    <td>{{ $e['date']->format('Y-m-d') }}</td>
-                                    <td>
-                                        @if($e['type'] === 'invoice')
-                                            <span class="badge bg-primary">فاتورة</span>
-                                        @elseif($e['type'] === 'return')
-                                            <span class="badge bg-warning">مرتجع</span>
-                                        @else
-                                            <span class="badge bg-success">دفعة</span>
-                                        @endif
-                                    </td>
-                                    <td>{{ $e['reference'] }}</td>
-                                    <td>{{ $e['description'] }}</td>
-                                    <td class="text-end">{{ $e['debit'] > 0 ? number_format($e['debit'], 2) : '—' }}</td>
-                                    <td class="text-end">{{ $e['credit'] > 0 ? number_format($e['credit'], 2) : '—' }}</td>
-                                    <td class="text-end"><strong>{{ number_format($e['balance'], 2) }}</strong></td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="7" class="text-center">لا توجد حركات لهذا العميل{{ $asOfDate ? ' حتى التاريخ المحدد' : '' }}.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-                @if($entries->isNotEmpty())
-                <div class="card-footer text-end">
-                    <strong>الرصيد الحالي:</strong> {{ number_format($entries->last()['balance'], 2) }}
-                </div>
-                @endif
             </div>
         </div>
     </div>
-</div>
+@stop
+
+@section('script')
+    @include('admin.components.premium.scripts')
 @stop
